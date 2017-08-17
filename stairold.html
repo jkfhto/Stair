@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <title>stair</title>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+        <!-- <script src="../js/threenew.js"></script> -->
+        <script type="text/javascript" src="three.js"></script>
+        <script src="OrbitControls2.js"></script>
+        <script type="text/javascript" src="JSQEXMathematics.js"></script>
+        <script type="text/javascript" src="JSQEXBasicStructures.js"></script>
+        <script type="text/javascript" src="stair3ds.js"></script>
+        <script src="dat.gui.min.js"></script>
+        <script type="text/javascript" src="command3ds.js"></script>
+        <style>
+            body {
+                margin: 0px;
+                background-color: #000000;
+                overflow: hidden;
+            }
+        </style>
+    </head>
+    <body>
+        <script type="text/javascript">
+        init();
+animate()
+var camera, scene, renderer;
+            var mesh,controls;
+function init() {
+
+                // camera = new THREE.PerspectiveCamera( 70, window.innerWidth / window.innerHeight, 1, 100000 );
+                camera =new THREE.OrthographicCamera( window.innerWidth / - .2, window.innerWidth / .2, window.innerHeight / .2, window.innerHeight / - .2, 1, 100000 );
+                // camera.position.z = 400;
+                camera.position.y=7000;
+                scene = new THREE.Scene();
+                var axes = new THREE.AxisHelper( 2000 );
+                scene.add(axes);
+                // var help=new THREE.CameraHelper(camera);
+                //   scene.add(help); 
+                renderer = new THREE.WebGLRenderer({antialias:true});
+                // renderer.setClearColor(new THREE.Color(0xf0f0f0, 1.0));
+                renderer.setClearColor( 0xf0f0f0 );
+                // renderer.setPixelRatio( window.devicePixelRatio );
+                renderer.setSize( window.innerWidth, window.innerHeight );
+                // renderer.shadowMap.enabled = true;
+                controls=new THREE.OrbitControls(camera,renderer.domElement);//绑定为当前的canvas对象，不然事件绑定对象为document会出现bug，例如影响点击，移动操作等
+                var light = new THREE.AmbientLight( 0x404040 ); // soft white light
+                scene.add( light );
+                document.body.appendChild( renderer.domElement );
+                var stair = new JSQEXBasicStructure.JSQEX_Stair();
+                aa=new JSQEXCommands.JSQEX_StairEditor(stair,renderer.domElement);
+                aa.JSQEX_stair.JSQEX_initEdit_interface(3);
+    //             var _json={points: [ { x: 0, y: 0 }, { x: -1500, y:0 },{ x: -2210, y:0 },{ x: -2210, y:610 },{ x: -1500, y:610 },{ x: 0, y:610 },{ x: 410, y:610 },{ x: 410, y:0 },{ x: 0, y:0 },{ x: -1500, y:0 },{ x: -2210, y:0 },{ x: -2210, y:610 },{ x: -1500, y:610 },{ x: 0, y:610 }],
+    // segmentInfo: [{ scope: [0, 1], height:[0,500], stairCount: 6 },{ scope: [1, 4], height:[500,500], stairCount: 0 },{ scope: [4, 5], height:[500,1000], stairCount: 6 },{ scope: [5, 8], height:[1000,1000], stairCount: 0 },{ scope: [8, 9], height:[1000,1500], stairCount: 6 },{ scope: [9, 12], height:[1500,1500], stairCount: 0 },{ scope: [12, 13], height:[1500,2000], stairCount: 6 }],tjwidth:520,tjhd:50,pthd:50,overdistance:60,ptwidth:520 ,materialurl:["css/pic1.jpg","css/pic2.jpg","css/pic3.jpg","css/pic4.jpg","css/pic5.jpg","css/pic6.jpg"] };
+    // var _json=aa.JSQEX_stair.JSQEX_Computevertex(new THREE.Vector3(-1536, 717, 200),new THREE.Vector3(1580, -1947, 200),3);
+    // var _json=aa.JSQEX_stair.JSQEX_Computevertex(new THREE.Vector3(-2000, -2400, 200),new THREE.Vector3(1580, 1947, 200),3);
+    //             stair.JSQEX_load(_json)
+    //             aa.JSQEX_onExecute();
+                renderer.domElement.id="staircanvas";
+                // document.getElementById("staircanvas").onmousedown=function(){
+                //     aa.JSQEX_onMouseDown(event);
+                // };
+                // document.getElementById("staircanvas").onmousemove=function(){
+                //     aa.JSQEX_onMouseMove(event);
+                // };
+                // document.getElementById("staircanvas").onmouseup=function(){
+                //     aa.JSQEX_onMouseUp(event);
+                // };
+                window.addEventListener( 'resize', onWindowResize, false );
+            }
+ function animate() {
+                requestAnimationFrame( animate );
+                renderer.render( scene, camera );
+            } 
+function onWindowResize() {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize( window.innerWidth, window.innerHeight );                   
+        }              
+                 </script>
+    </body>
+</html>
