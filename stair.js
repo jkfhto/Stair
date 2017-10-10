@@ -1875,7 +1875,7 @@ JSQEXBasicStructure.JSQEX_Stair_Ltype.prototype.JSQEX_showgui = function(json) {
 }
 
 JSQEXBasicStructure.JSQEX_Stair_Ltype.prototype.JSQEX_getpoints1 = function(_json){
-    this.JSQEX_pdnum==1?(this.layout.angle=Math.abs(this.layout.angle)):(this.layout.angle=-Math.abs(this.layout.angle))
+    // this.JSQEX_pdnum==1?(this.layout.angle=Math.abs(this.layout.angle)):(this.layout.angle=-Math.abs(this.layout.angle))
     var _num1=this.layout.subsection1,
     _num2=this.layout.subsection2,
     object_type=this.JSQEX_object_type,
@@ -3583,8 +3583,10 @@ JSQEXBasicStructure.JSQEX_Stair.prototype.JSQEX_Calculate_uv = function(tjlx,ind
 };
 
 JSQEXBasicStructure.JSQEX_Stair.prototype.JSQEX_changedirection=function(num) {//1:顺时针，-1:逆时针
-    if(this.JSQEX_obj.JSQEX_pdnum==num||this.JSQEX_obj.JSQEX_object_type.beelinetype){
+    if(this.JSQEX_obj.JSQEX_pdnum==num&&!this.JSQEX_obj.JSQEX_object_type.ltype||this.JSQEX_obj.JSQEX_object_type.beelinetype||(this.JSQEX_obj.JSQEX_object_type.ltype&&((this.JSQEX_obj.layout.angle<0&&num<0)||(this.JSQEX_obj.layout.angle>0&&num>0)))){
         return;
+    }else{
+        num==1?(this.JSQEX_obj.layout.angle=Math.abs(this.JSQEX_obj.layout.angle)):(this.JSQEX_obj.layout.angle=-Math.abs(this.JSQEX_obj.layout.angle))
     }
     this.JSQEX_obj.JSQEX_pdnum=num;
     if(this.JSQEX_obj.JSQEX_object_type.spiraltype){
