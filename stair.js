@@ -209,21 +209,21 @@ THREE.Vector3.prototype.setFromSpherical=function(s){
 }
 
 // THREE.Face3.prototype.facelx=0;
-THREE.Face3=function( a, b, c, normal, color, materialIndex,faceLx ) {
-        // faceLx  默认：0表示平台面  1：表示台阶面 
-        this.a = a;
-        this.b = b;
-        this.c = c;
+// THREE.Face3=function( a, b, c, normal, color, materialIndex,faceLx ) {
+//         // faceLx  默认：0表示平台面  1：表示台阶面 
+//         this.a = a;
+//         this.b = b;
+//         this.c = c;
 
-        this.normal = (normal && normal.isVector3) ? normal : new THREE.Vector3();
-        this.vertexNormals = Array.isArray( normal ) ? normal : [];
+//         this.normal = (normal && normal.isVector3) ? normal : new THREE.Vector3();
+//         this.vertexNormals = Array.isArray( normal ) ? normal : [];
 
-        this.color = (color && color.isColor) ? color : new THREE.Color();
-        this.vertexColors = Array.isArray( color ) ? color : [];
+//         this.color = (color && color.isColor) ? color : new THREE.Color();
+//         this.vertexColors = Array.isArray( color ) ? color : [];
 
-        this.materialIndex = materialIndex !== undefined ? materialIndex : 0;
-        this.faceLx = faceLx !== undefined ? faceLx : 0;
-}
+//         this.materialIndex = materialIndex !== undefined ? materialIndex : 0;
+//         this.faceLx = faceLx !== undefined ? faceLx : 0;
+// }
 THREE.ImageLoader.prototype.setPath=function(value){
     this.path = value;
     return this;
@@ -307,62 +307,114 @@ function copyObj( obj ) {//深拷贝 用于将索引转成数据 用于解决将
 }
 JSQEXBasicStructure.JSQEX_Stair = function(a) {
     JSQEXBasicStructure.BasicStructure.call(this, a);
+    this.JSQEX_stairsMesh_arr = [];
     this.JSQEX_stairsMesh = null;
-    this.JSQEX_geom=new THREE.Geometry() ;
+    this.JSQEX_geom=null ;
     this.JSQEX_stairsMaterial=null;
     this.JSQEX_verticesnum=0;
     this.JSQEX_vertices=[];
     this.JSQEX_faces=[];
     this.JSQEX_faceVertexUvs=[];
-    this.JSQEX_mouse = new THREE.Vector2();
     this.JSQEX_stairsuv = [[new THREE.Vector2(0,1),new THREE.Vector2(0,0), new THREE.Vector2(1,1)],[new THREE.Vector2(0,0), new THREE.Vector2(1,0), new THREE.Vector2(1,1)]];
-    this.JSQEX_caneditor=false;
-    this.JSQEX_obj=null;
+    this.JSQEX_Currentobjectindex=null;
+    this.JSQEX_container=null;
     this.JSQEX_parent=null;
-    this.JSQEX_object_type={beelinetype:false,ltype:false,utype:false,spiraltype:true};
+    this.JSQEX_object_type={};
     this.JSQEX_pdnum=1;//判断绘图时拖动方向
-    // this.JSQEX_arr=[];
     this.JSQEX_uvlx=99;
-    this.JSQEX_data=null;
+    this.JSQEX_initialdata={};
+    this.JSQEX_initialdataarr=[];
     this.JSQEX_Texturescale=[];
+    this.JSQEX_Texturesize=[[8,8],[8,8],[8,8],[8,8],[8,8],[8,8],[8,8],[8,8],[8,8],[8,8],[8,8],[8,8]];
     this.JSQEX_armrest=[[],[],[],[],[]];
+    this.JSQEX_BoxHelper=null;
+    this.JSQEX_Railingoffset={f_b:.5,l_r:.2}
+    this.JSQEX_jdpoints=[];
 };
 
 JSQEXUtilities.JSQEX_inherits(JSQEXBasicStructure.JSQEX_Stair, JSQEXBasicStructure.BasicStructure);
 JSQEXBasicStructure.JSQEX_Stair.prototype.JSQEX_Class = "JSQEXBasicStructure.JSQEX_Stair";
-JSQEXBasicStructure.JSQEX_Stair.prototype.JSQEX_importData = function(data) {
-    this.JSQEX_materialurl=data.materialsurl;
-};
+// JSQEXBasicStructure.JSQEX_Stair.prototype.JSQEX_importData = function(data) {
+//     this.JSQEX_materialurl=data.materialsurl;
+// };
 
 JSQEXBasicStructure.JSQEX_Stair.prototype.JSQEX_dispose = function() {
-        this.JSQEX_pointindex=0;
         this.JSQEX_verticesnum=0;
         this.JSQEX_vertices=[];
         this.JSQEX_faces=[];
         this.JSQEX_faceVertexUvs=[];
 };
 
+// JSQEXBasicStructure.JSQEX_Stair.prototype.JSQEX_dump = function() {
+//     var b = JSQEXBasicStructure.JSQEX_Stair.superClass_.JSQEX_dump.call( this );
+//     var c = b[0];
+//     c.JSQEX_materialurl=this.JSQEX_materialurl;
+//     return b;
+// };
+
 JSQEXBasicStructure.JSQEX_Stair.prototype.JSQEX_dump = function() {
     var b = JSQEXBasicStructure.JSQEX_Stair.superClass_.JSQEX_dump.call( this );
     var c = b[0];
-    c.JSQEX_materialurl=this.JSQEX_materialurl;
+    c.JSQEX_initialdata=this.JSQEX_initialdata;
     return b;
 };
 
-JSQEXBasicStructure.JSQEX_Stair.prototype.JSQEX_changeMaterial = function(index,_url,operation) {//材质修改index材质索引： 0：台阶上下面 1：台阶前后左右 2：支撑梁上下面 3：支撑梁前后左右面 4：侧弦上下面  5：侧弦前后左右面  :6：平台上下面 7：平台前后左右面 ._url:图片路径
+JSQEXBasicStructure.JSQEX_Stair.prototype.JSQEX_load = function(data, callback) {
+    // this.JSQEX_drawstair(this.JSQEX_points,this.JSQEX_segmentInfo);
+    // console.log("读取数据："+"----------data"+JSON.stringify(data));
+    // console.log(this)
+    this.JSQEX_initialdataarr=data.JSQEX_initialdataarr;
+    if(data.JSQEX_initialdataarr[0]){
+        this.attachID=data.JSQEX_initialdataarr[0].attachID;
+        this.graphID=data.JSQEX_initialdataarr[0].graphID;
+    }
+    if(typeof callback === "function"){
+        callback();         
+    }
+};
+
+JSQEXBasicStructure.JSQEX_Stair.prototype.JSQEX_changeMaterial = function(index,json,operation) {//材质修改index材质索引： 0：台阶上下面 1：台阶前后左右 2：支撑梁上下面 3：支撑梁前后左右面 4：侧弦上下面  5：侧弦前后左右面  :6：平台上下面 7：平台前后左右面 .json:图片路径
     if(index==undefined){
         return;
     }
-    this.JSQEX_obj.JSQEX_stairsMesh.material.materials[index].map.dispose();
-    this.JSQEX_obj.JSQEX_stairsMesh.material.materials[index].dispose();
-    var index11=Math.ceil(Math.random()*16);
-    var url = _url != undefined ? _url : "css/pic"+index11+".jpg";
-    var changeTexture = new THREE.TextureLoader().load(url);
-    changeTexture.wrapS = changeTexture.wrapT = THREE.RepeatWrapping;
-    changeTexture.wrapS = changeTexture.wrapT = THREE.RepeatWrapping;
-    changeTexture.repeat.set(this.JSQEX_obj.JSQEX_Texturescale[index][0],this.JSQEX_obj.JSQEX_Texturescale[index][1]);
-    this.JSQEX_obj.JSQEX_stairsMesh.material.materials[index].map = changeTexture;
-    this.JSQEX_obj.JSQEX_stairsMesh.material.materials[index].needsUpdate=true;
+    var Currentobjectindex=this.JSQEX_checkindex(this.JSQEX_Currentobjectindex);
+    this.JSQEX_stairsMesh_arr[Currentobjectindex].JSQEX_stairsMesh.material.materials[index].map.dispose();
+    this.JSQEX_stairsMesh_arr[Currentobjectindex].JSQEX_stairsMesh.material.materials[index].dispose();
+    var index11=parseInt(Math.random()*20)+1;
+    var url = json != undefined ? json.src[0] : "css/pic"+index11+".jpg";
+    if(operation!=null){
+        url=operation.url;
+    }
+    var width,height;
+    if(json!=undefined){
+        for(var key in this.JSQEX_stairsMesh_arr[Currentobjectindex].JSQEX_initialdata.materials[index]){
+            if(this.JSQEX_stairsMesh_arr[Currentobjectindex].JSQEX_initialdata.materials[index].hasOwnProperty(key)) {
+                this.JSQEX_stairsMesh_arr[Currentobjectindex].JSQEX_initialdata.materials[index][key]=null;
+            }
+    　　}
+        this.JSQEX_stairsMesh_arr[Currentobjectindex].JSQEX_initialdata.materials[index]=null;
+        this.JSQEX_stairsMesh_arr[Currentobjectindex].JSQEX_initialdata.materials[index]=copyObj(json);
+        width=json.realSize[0][0];
+        height=json.realSize[0][1];
+        this.JSQEX_stairsMesh_arr[Currentobjectindex].JSQEX_Calculate_uv(this.JSQEX_stairsMesh_arr[Currentobjectindex].JSQEX_object_type,index,null,width,height);
+    }
+    var changeTexture = THREE.ImageUtils.loadTexture(url,null,this.JSQEX_isPowerOfTwo.bind(this.JSQEX_stairsMesh_arr[Currentobjectindex],index));
+    // changeTexture.wrapS = changeTexture.wrapT = THREE.RepeatWrapping;
+    // changeTexture.wrapS = changeTexture.wrapT = THREE.RepeatWrapping;
+    changeTexture.repeat.set(this.JSQEX_stairsMesh_arr[Currentobjectindex].JSQEX_Texturescale[index][0],this.JSQEX_stairsMesh_arr[Currentobjectindex].JSQEX_Texturescale[index][1]);
+    this.JSQEX_stairsMesh_arr[Currentobjectindex].JSQEX_stairsMesh.material.materials[index].map = changeTexture;
+    this.JSQEX_stairsMesh_arr[Currentobjectindex].JSQEX_stairsMesh.material.materials[index].needsUpdate=true;
+    if(!this.JSQEX_stairsMesh_arr[Currentobjectindex].tjlx.open&&operation==null){
+        if(index==0){
+            this.JSQEX_changeMaterial(3,json,{url:url})
+        }
+        if(index==1){
+            this.JSQEX_changeMaterial(4,json,{url:url})
+        }
+        if(index==2){
+            this.JSQEX_changeMaterial(5,json,{url:url})
+        }
+    }
 };
 
 JSQEXBasicStructure.JSQEX_Stair.prototype.JSQEX_computeBoundingBox=function(points) {
@@ -626,126 +678,135 @@ JSQEXBasicStructure.JSQEX_Stair.prototype.JSQEX_pdyval = function(arr,_num) {
         }
 }
 
-JSQEXBasicStructure.JSQEX_Stair.prototype.JSQEX_AddStair = function(json){//在场景中添加楼梯对象
+JSQEXBasicStructure.JSQEX_Stair.prototype.JSQEX_AddStair = function(Added){//在场景中添加楼梯对象
     this.JSQEX_geom=new THREE.Geometry();
     this.JSQEX_geom.vertices = this.JSQEX_vertices;
     this.JSQEX_geom.faces = this.JSQEX_faces;
     this.JSQEX_geom.faceVertexUvs[0]=this.JSQEX_faceVertexUvs;
     this.JSQEX_geom.computeFaceNormals();
+    // console.log(this.JSQEX_stairsMaterial)
     if(this.JSQEX_stairsMaterial==null){
-        var Texture1 = new THREE.TextureLoader().load("css/pic8.jpg");
-        Texture1.wrapS = Texture1.wrapT = THREE.RepeatWrapping;
-        var Texture2 = new THREE.TextureLoader().load("css/pic8.jpg");
-        Texture2.wrapS = Texture2.wrapT = THREE.RepeatWrapping;
-        var Texture3 = new THREE.TextureLoader().load("css/pic8.jpg");
-        Texture3.wrapS = Texture3.wrapT = THREE.RepeatWrapping;
-        var Texture4 = new THREE.TextureLoader().load("css/pic8.jpg");
-        Texture4.wrapS = Texture4.wrapT = THREE.RepeatWrapping;
-        var Texture5 = new THREE.TextureLoader().load("css/pic8.jpg");
-        Texture5.wrapS = Texture5.wrapT = THREE.RepeatWrapping;
-        var Texture6 = new THREE.TextureLoader().load("css/pic8.jpg");
-        Texture6.wrapS = Texture6.wrapT = THREE.RepeatWrapping;
-        var Texture7 = new THREE.TextureLoader().load("css/pic8.jpg");
-        Texture7.wrapS = Texture7.wrapT = THREE.RepeatWrapping;
-        var Texture8 = new THREE.TextureLoader().load("css/pic8.jpg");
-        Texture8.wrapS = Texture8.wrapT = THREE.RepeatWrapping;
-        var Texture9 = new THREE.TextureLoader().load("css/pic8.jpg");
-        Texture9.wrapS = Texture9.wrapT = THREE.RepeatWrapping;
-        var materials = [
-                new THREE.MeshBasicMaterial({opacity: 1, transparent: true,map:Texture1}),
-                new THREE.MeshBasicMaterial({opacity: 1, transparent: true,map:Texture2}),
-                new THREE.MeshBasicMaterial({opacity: 1, transparent: true,map:Texture3}),
-                new THREE.MeshBasicMaterial({opacity: 1, transparent: true,map:Texture4}),
-                new THREE.MeshBasicMaterial({opacity: 1, transparent: true,map:Texture5}),
-                new THREE.MeshBasicMaterial({opacity: 1, transparent: true,map:Texture6}),
-                new THREE.MeshBasicMaterial({opacity: 1, transparent: true,map:Texture7}),
-                new THREE.MeshBasicMaterial({opacity: 1, transparent: true,map:Texture8}),
-                new THREE.MeshBasicMaterial({opacity: 1, transparent: true,map:Texture9})      
-        ];
+        // var TextureLoader=new THREE.TextureLoader();
+        // TextureLoader.crossOrigin = 'Anonymous';
+        var materials=[];
+        // this.JSQEX_initialdata.materials=[];
+        for(var i=0;i<9;i++){
+             materials.push(new THREE.MeshPhongMaterial());
+             var _obj=this.JSQEX_initialdata.materials[i]!=undefined?this.JSQEX_initialdata.materials[i]:{"mode":"mould","nValue":2,"nUnits":1,"map":[0],"value":[8,8],"cycle":[["a","0"],["0","b"],["-a","0"],["0","-b"]],"position":[["0","0"]],"clipSize":[["a","b"]],"radius":[["0","0","0","0"]],"src":["http://res.gezlife.com/resource/Imgs/uploads/model/201706/13/155995L/155995_UV_COS.jpg"],"realSize":[[8,8]],"type":"A","id":["B_157527_160621_157527"],"backupSrc":[[]],"model":["富之岛/富丽/450"],"matRotate":["0"],"bgRefSrc":"","reflexParameter":[""],"blurValue":["0.85"],"reflexMinQuality":[""],"reflexMidQuality":[""],"reflexMaxQuality":[""],"map_yy":[""],"map_gg":[""],"map_fx":[""],"map_zh":[""],"refSrc":[""],"chamferRanges":[[true,true,true,true]],"normals":[1],"method":"roll","rotation":"0","paveDetail":{"ifAngle":[false],"angleEdge":["5"],"ifPave":true,"paveType":"","paveData":{"paveWay":"roll","paveDire":"0","paveSize":"4"}},"rotCenter":{"x":0,"y":0},"lines":[0.03],"bgSrc":"common/images/color/c_cement.jpg?13","lineWidth":0.03};
+             this.JSQEX_initialdata.materials.push(_obj);
+             materials[i].map= THREE.ImageUtils.loadTexture(_obj.src,null,this.JSQEX_isPowerOfTwo.bind(this,i));
+        }
         if(this.JSQEX_object_type.ltype||this.JSQEX_object_type.utype){
-            var Texture10 = new THREE.TextureLoader().load("css/pic8.jpg");
-            Texture10.wrapS = Texture10.wrapT = THREE.RepeatWrapping;
-            var Texture11 = new THREE.TextureLoader().load("css/pic8.jpg");
-            Texture11.wrapS = Texture11.wrapT = THREE.RepeatWrapping;
-            materials.push(
-                new THREE.MeshBasicMaterial({opacity: 1, transparent: true,map:Texture10}),
-                new THREE.MeshBasicMaterial({opacity: 1, transparent: true,map:Texture11})
-            )
+            for(var i=9;i<11;i++){
+             materials.push(new THREE.MeshPhongMaterial());
+             var _obj=this.JSQEX_initialdata.materials[i]!=undefined?this.JSQEX_initialdata.materials[i]:{"mode":"mould","nValue":2,"nUnits":1,"map":[0],"value":[8,8],"cycle":[["a","0"],["0","b"],["-a","0"],["0","-b"]],"position":[["0","0"]],"clipSize":[["a","b"]],"radius":[["0","0","0","0"]],"src":["http://res.gezlife.com/resource/Imgs/uploads/model/201706/13/155995L/155995_UV_COS.jpg"],"realSize":[[8,8]],"type":"A","id":["B_157527_160621_157527"],"backupSrc":[[]],"model":["富之岛/富丽/450"],"matRotate":["0"],"bgRefSrc":"","reflexParameter":[""],"blurValue":["0.85"],"reflexMinQuality":[""],"reflexMidQuality":[""],"reflexMaxQuality":[""],"map_yy":[""],"map_gg":[""],"map_fx":[""],"map_zh":[""],"refSrc":[""],"chamferRanges":[[true,true,true,true]],"normals":[1],"method":"roll","rotation":"0","paveDetail":{"ifAngle":[false],"angleEdge":["5"],"ifPave":true,"paveType":"","paveData":{"paveWay":"roll","paveDire":"0","paveSize":"4"}},"rotCenter":{"x":0,"y":0},"lines":[0.03],"bgSrc":"common/images/color/c_cement.jpg?13","lineWidth":0.03};
+             this.JSQEX_initialdata.materials.push(_obj);
+             materials[i].map= THREE.ImageUtils.loadTexture(_obj.src,null,this.JSQEX_isPowerOfTwo.bind(this,i));
+            } 
             if(this.JSQEX_object_type.utype){
-                var Texture12 = new THREE.TextureLoader().load("css/pic8.jpg");
-                Texture12.wrapS = Texture12.wrapT = THREE.RepeatWrapping;
                 materials.push(
-                new THREE.MeshBasicMaterial({opacity: 1, transparent: true,map:Texture12})
+                    new THREE.MeshPhongMaterial()
                 )
+                var _obj=this.JSQEX_initialdata.materials[11]!=undefined?this.JSQEX_initialdata.materials[11]:{"mode":"mould","nValue":2,"nUnits":1,"map":[0],"value":[8,8],"cycle":[["a","0"],["0","b"],["-a","0"],["0","-b"]],"position":[["0","0"]],"clipSize":[["a","b"]],"radius":[["0","0","0","0"]],"src":["http://res.gezlife.com/resource/Imgs/uploads/model/201706/13/155995L/155995_UV_COS.jpg"],"realSize":[[8,8]],"type":"A","id":["B_157527_160621_157527"],"backupSrc":[[]],"model":["富之岛/富丽/450"],"matRotate":["0"],"bgRefSrc":"","reflexParameter":[""],"blurValue":["0.85"],"reflexMinQuality":[""],"reflexMidQuality":[""],"reflexMaxQuality":[""],"map_yy":[""],"map_gg":[""],"map_fx":[""],"map_zh":[""],"refSrc":[""],"chamferRanges":[[true,true,true,true]],"normals":[1],"method":"roll","rotation":"0","paveDetail":{"ifAngle":[false],"angleEdge":["5"],"ifPave":true,"paveType":"","paveData":{"paveWay":"roll","paveDire":"0","paveSize":"4"}},"rotCenter":{"x":0,"y":0},"lines":[0.03],"bgSrc":"common/images/color/c_cement.jpg?13","lineWidth":0.03};
+                this.JSQEX_initialdata.materials.push(_obj);
+                materials[11].map= THREE.ImageUtils.loadTexture(_obj.src,null,this.JSQEX_isPowerOfTwo.bind(this,11));
             }
         }
         this.JSQEX_stairsMaterial = new THREE.MultiMaterial( materials );
-        
+        if(!Added){
+            this.JSQEX_parent.JSQEX_initialdataarr.push(this.JSQEX_initialdata);
+        }
     }else{
-        this.JSQEX_stairsMesh.geometry.dispose();
-        this.JSQEX_parent.remove(this.JSQEX_stairsMesh);
-        this.JSQEX_stairsMesh=null;
+        this.JSQEX_stairsMesh&&(this.JSQEX_stairsMesh.geometry.dispose(),this.JSQEX_container.remove(this.JSQEX_stairsMesh),this.JSQEX_stairsMesh=null);
     }
     this.JSQEX_Calculate_uv(this.JSQEX_object_type,null,true);
     for(var i=0,j=this.JSQEX_stairsMaterial.materials.length;i<j;i++){
         this.JSQEX_stairsMaterial.materials[i].map.repeat=new THREE.Vector2(this.JSQEX_Texturescale[i][0],this.JSQEX_Texturescale[i][1]);
     }
     this.JSQEX_stairsMesh = new THREE.Mesh( this.JSQEX_geom, this.JSQEX_stairsMaterial );
+    this.JSQEX_stairsMesh.JSQEX_entity=this;
+    this.JSQEX_stairsMesh.graphID=this.JSQEX_parent.graphID;
+    // this.JSQEX_stairsMesh.JSQEX_Currentobjectindex=this.JSQEX_Currentobjectindex;
+    this.JSQEX_stairsMesh.JSQEX_isStair=true;
     this.JSQEX_stairsMesh.children.forEach(function (e) {
             e.castShadow = true
     });
-    this.JSQEX_parent.add(this.JSQEX_stairsMesh);
+    this.JSQEX_container.add(this.JSQEX_stairsMesh);
 }
 
-JSQEXBasicStructure.JSQEX_Stair.prototype.JSQEX_initEdit_interface = function(json) {//初始化楼梯对象
+JSQEXBasicStructure.JSQEX_Stair.prototype.JSQEX_initEdit_interface = function(json,Added) {//初始化楼梯对象
     var _lx=json.stairlx!=undefined?json.stairlx:1;
-    this.JSQEX_data=json;
-    this.JSQEX_obj=this.JSQEX_obj!=null?null&&(this.JSQEX_obj.JSQEX_object_type=null,this.JSQEX_object_type=null):this.JSQEX_obj;
     if(_lx==1){//螺旋
-        this.JSQEX_obj= new JSQEXBasicStructure.JSQEX_Stair_Spiral();
-        this.JSQEX_obj.JSQEX_object_type={beelinetype:false,ltype:false,utype:false,spiraltype:true};
-        this.JSQEX_object_type={beelinetype:false,ltype:false,utype:false,spiraltype:true};
+        var Currentobject= new JSQEXBasicStructure.JSQEX_Stair_Spiral(json);
     }else if(_lx==2){//直线
-        this.JSQEX_obj= new JSQEXBasicStructure.JSQEX_Stair_Beeline();
-        this.JSQEX_obj.JSQEX_object_type={beelinetype:true,ltype:false,utype:false,spiraltype:false}
-        this.JSQEX_object_type={beelinetype:true,ltype:false,utype:false,spiraltype:false};
+        var Currentobject= new JSQEXBasicStructure.JSQEX_Stair_Beeline(json);
     }else if(_lx==3){//U型楼梯
-        this.JSQEX_obj= new JSQEXBasicStructure.JSQEX_Stair_Utype();
-        this.JSQEX_obj.JSQEX_object_type={beelinetype:false,ltype:false,utype:true,spiraltype:false};
-        this.JSQEX_object_type={beelinetype:false,ltype:false,utype:true,spiraltype:false};
+        var Currentobject= new JSQEXBasicStructure.JSQEX_Stair_Utype(json);
     }else{//L型楼梯
-        this.JSQEX_obj= new JSQEXBasicStructure.JSQEX_Stair_Ltype();
-        this.JSQEX_obj.JSQEX_object_type={beelinetype:false,ltype:true,utype:false,spiraltype:false};
-        this.JSQEX_object_type={beelinetype:false,ltype:true,utype:false,spiraltype:false};
+        var Currentobject= new JSQEXBasicStructure.JSQEX_Stair_Ltype(json);
     }
-    this.JSQEX_obj.JSQEX_parent=json.obj!=undefined?json.obj:scene;
-    this.JSQEX_obj.JSQEX_getpoints(json);
-    this.JSQEX_obj.JSQEX_draw();
-    json.addgui&&this.JSQEX_obj.JSQEX_showgui();//显示楼梯对象的编辑区域
+    this.JSQEX_stairsMesh_arr.push(Currentobject);
+    this.JSQEX_Currentobjectindex=Currentobject.ID;
+    Currentobject.JSQEX_container=json.obj!=undefined?json.obj:scene;
+    Currentobject.JSQEX_initialdata.stairlx=json.stairlx!=undefined?json.stairlx:1;
+    Currentobject.JSQEX_initialdata.normal=json.normal!=undefined?json.normal:new THREE.Vector3(-1,0,0);
+    Currentobject.JSQEX_initialdata.point=json.point!=undefined?json.point:new THREE.Vector3(11,30,5);
+    Currentobject.JSQEX_initialdata.addgui=json.addgui!=undefined?json.addgui:false;
+    // Currentobject.JSQEX_initialdata.length=json.length!=undefined?json.length:20;
+    // Currentobject.JSQEX_initialdata.obj=json.obj!=undefined?json.obj:null;
+    Currentobject.JSQEX_initialdata.materials=json.materials!=undefined?json.materials:[];
+    Currentobject.JSQEX_initialdata.borderPoints=json.borderPoints;
+    Currentobject.JSQEX_parent=this;
+    Currentobject.JSQEX_getpoints(json,null,Added);
+    Currentobject.JSQEX_initdata();
+    Currentobject.JSQEX_limitwidth();
+    Currentobject.JSQEX_drawstair(Added);
+    json.addgui&&Currentobject.JSQEX_showgui();//显示楼梯对象的编辑区域
 }
 
-JSQEXBasicStructure.JSQEX_Stair.prototype.JSQEX_getpoints = function(json,change){//json.height:点击处距离上边的距离
+JSQEXBasicStructure.JSQEX_Stair.prototype.JSQEX_limitwidth = function(json,Added) {//楼梯宽度限制
+    if(this.JSQEX_initialdata.borderPoints){
+        var borderPoints1=this.JSQEX_initialdata.borderPoints[0].__proto__===THREE.Vector3.prototype?this.JSQEX_initialdata.borderPoints[0]:new THREE.Vector3(this.JSQEX_initialdata.borderPoints[0].x,this.JSQEX_initialdata.borderPoints[0].y,this.JSQEX_initialdata.borderPoints[0].z);
+        var borderPoints2=this.JSQEX_initialdata.borderPoints[1].__proto__===THREE.Vector3.prototype?this.JSQEX_initialdata.borderPoints[1]:new THREE.Vector3(this.JSQEX_initialdata.borderPoints[1].x,this.JSQEX_initialdata.borderPoints[1].y,this.JSQEX_initialdata.borderPoints[1].z);
+        this.JSQEX_limitwidthnum= Math.min(new THREE.Vector3().subVectors(borderPoints1,this.JSQEX_initialdata.point.clone().setY(borderPoints1.y)).length(),new THREE.Vector3().subVectors(borderPoints2,this.JSQEX_initialdata.point.clone().setY(borderPoints1.y)).length())
+    }
+}
+
+JSQEXBasicStructure.JSQEX_Stair.prototype.JSQEX_getpoints = function(json,change,Added){//json.height:点击处距离上边的距离
     var _normal=json.normal!=undefined?json.normal.normalize():new THREE.Vector3(1,0,0);
-    var _length=json.length!=undefined?json.length:1500;
-    var _height=json.point.y+(json.height!=undefined?json.height:0);
-    var _point2=json.point!=undefined?json.point:new THREE.Vector3(0,1000,0);
+    // var _length=json.length!=undefined?json.length:()json.layout.length?json.layout.length:15;
+    var _height=json.height!=undefined?json.height:json.step.height!=undefined?json.step.height:json.point.y;
+    var _point2=json.point!=undefined?json.point:new THREE.Vector3(0,10,0);
+    var _length=15;
+    if(json.length){
+        _length=json.length;
+    }else{
+        if(json.layout.radius){
+            _length=json.layout.radius;
+        }
+        if(json.layout.length){
+            _length=json.layout.length;
+        }
+    }
     _point2=_point2.clone().setY(0);
     if(_normal.clone().cross(new THREE.Vector3(0,0,1)).length()==0){
         this.JSQEX_uvlx=3;
     }
     if(json.stairlx==1){
         this.tangent=this.JSQEX_Getnormal(_normal).multiplyScalar(this.JSQEX_pdnum);
-        this.layout.radius=_length;
-        if(change){
-            this.aEndAngle+=Math.PI*this.JSQEX_pdnum;
-            this.aStartAngle=this.aEndAngle-this.JSQEX_pdnum*this.layout.rotate*(Math.PI/180);
-        }else{
-            this.step.height=_height;
-            this.aStartAngle=this.tangent.z>0?Math.acos(this.tangent.clone().dot(new THREE.Vector3(1,0,0)))*-1:Math.acos(this.tangent.clone().dot(new THREE.Vector3(1,0,0)));
-            this.aEndAngle=this.aStartAngle+this.JSQEX_pdnum*this.layout.rotate*(Math.PI/180);
+        if(!Added){
+            if(change){
+                this.angle.aEndAngle+=Math.PI*this.JSQEX_pdnum;
+                this.angle.aStartAngle=this.angle.aEndAngle-this.JSQEX_pdnum*this.layout.rotate*(Math.PI/180);
+            }else{
+                this.step.height=_height;
+                this.angle.aStartAngle=this.tangent.z>0?Math.acos(this.tangent.clone().dot(new THREE.Vector3(1,0,0)))*-1:Math.acos(this.tangent.clone().dot(new THREE.Vector3(1,0,0)));
+                this.angle.aEndAngle=this.angle.aStartAngle+this.JSQEX_pdnum*this.layout.rotate*(Math.PI/180);
+            }
         }
-        console.log(this.aStartAngle*180/Math.PI,this.aEndAngle*180/Math.PI)
+        console.log(this.angle.aStartAngle*180/Math.PI,this.angle.aEndAngle*180/Math.PI)
         console.log(this.tangent)
+        this.layout.radius=_length;
         this.center=_point2.clone().add(this.tangent.clone().multiplyScalar(_length));
         this.point1=_point2.clone();
         console.log(this.center)
@@ -756,20 +817,20 @@ JSQEXBasicStructure.JSQEX_Stair.prototype.JSQEX_getpoints = function(json,change
         this.point1=_point2.clone().add(_normal.clone().multiplyScalar(_length));
     }else if(json.stairlx==3){                  
         this.step.height=_height;
-        this.layout.length1=_length;
-        this.layout.height1=_height/2;
-        this.layout.length2=_length;
-        this.layout.height2=_height/2;
-        this.point3=_point2.clone().add(_normal.clone().multiplyScalar(_length));;
+        this.layout.length1=json.layout&&json.layout.length1?json.layout.length1:_length;
+        this.layout.height1=json.layout&&json.layout.height1?json.layout.height1:_height/2;
+        this.layout.length2=json.layout&&json.layout.length2?json.layout.length2:_length;
+        this.layout.height2=json.layout&&json.layout.height2?json.layout.height2:_height/2;
+        this.point3=_point2.clone().add(_normal.clone().multiplyScalar(this.layout.length2));;
         this.point4=_point2.clone();
-        this.point1=_point2.clone();
+        this.point1=this.point3.clone().sub(_normal.clone().multiplyScalar(this.layout.length1));
         this.point2=this.point3.clone();
     }else{
-        var _point1=_point2.clone().add(_normal.clone().multiplyScalar(_length));
         this.step.height=_height;
-        this.layout.length2=_length
-        this.layout.length1=_length;
-        this.point3=_point1;
+        this.layout.length2=json.layout&&json.layout.length2?json.layout.length2:_length;
+        this.layout.length1=json.layout&&json.layout.length1?json.layout.length1:_length;;
+        // var _point1=_point2.clone().add(_normal.clone().multiplyScalar(this.layout.length1));
+        this.point3=_point2.clone().add(_normal.clone().multiplyScalar(this.layout.length2));
         this.point4=_point2;
         // this.layout.angle*=this.JSQEX_pdnum;
         this.ver1=new THREE.Vector3().subVectors(this.point1,this.point2).normalize();
@@ -777,32 +838,36 @@ JSQEXBasicStructure.JSQEX_Stair.prototype.JSQEX_getpoints = function(json,change
 }
 
 JSQEXBasicStructure.JSQEX_Stair.prototype.JSQEX_getRailingpoints = function(_json){//获取栏杆的组成点位置
-    for(var i=0,ii=this.JSQEX_obj.JSQEX_armrest.length;i<ii;i++){
-        for(var j=0,jj=this.JSQEX_obj.JSQEX_armrest[i].length;j<jj;j++){
-            var geometry = new THREE.BoxGeometry( 100, 100, 100 );
+    var Currentobjectindex=this.JSQEX_checkindex(this.JSQEX_Currentobjectindex);
+    for(var i=0,ii=this.JSQEX_stairsMesh_arr[Currentobjectindex].JSQEX_armrest.length;i<ii;i++){
+        for(var j=0,jj=this.JSQEX_stairsMesh_arr[Currentobjectindex].JSQEX_armrest[i].length;j<jj;j++){
+            var geometry = new THREE.BoxGeometry( 1, 1, 1 );
             var material = new THREE.MeshBasicMaterial( {color: 0x00ff00} );
             var cube1 = new THREE.Mesh( geometry, material );
-            cube1.position.copy(this.JSQEX_obj.JSQEX_armrest[i][j]);
-            this.JSQEX_obj.JSQEX_parent.add( cube1 );
+            cube1.position.copy(this.JSQEX_stairsMesh_arr[Currentobjectindex].JSQEX_armrest[i][j]);
+            this.JSQEX_stairsMesh_arr[Currentobjectindex].JSQEX_container.add( cube1 );
         }
     }
-    console.log(this.JSQEX_obj.JSQEX_armrest[0]);
-    console.log(this.JSQEX_obj.JSQEX_armrest[1]);
-    return this.JSQEX_obj.JSQEX_armrest;
+    console.log(this.JSQEX_stairsMesh_arr[Currentobjectindex].JSQEX_armrest[0]);
+    console.log(this.JSQEX_stairsMesh_arr[Currentobjectindex].JSQEX_armrest[1]);
+    return this.JSQEX_stairsMesh_arr[Currentobjectindex].JSQEX_armrest;
 }
 
-JSQEXBasicStructure.JSQEX_Stair_Beeline = function(a) {
+JSQEXBasicStructure.JSQEX_Stair_Beeline = function(json) {
     JSQEXBasicStructure.JSQEX_Stair.call(this);
-    this.point1=new THREE.Vector3(0,0,0);
-    this.point2=new THREE.Vector3(1000,0,0);
-    this.tjlx={open:true,close:false,floor:false};//类型 open：开放式 close：闭合式 floor：落地式 true：添加
-    this.JSQEX_object_type={beelinetype:false,ltype:false,utype:false,spiraltype:true};
-    this.addgeo={side_string:false,support_beam:false};//生成几何体 side_string:侧弦 support_beam：支撑梁   true：添加
-    this.layout={length:0,width1:1500,width2:1500};//布局 length:长度,width:宽度
-    this.step={height:1};//梯级 height:高度
-    this.steps={thickness:26,depth:20,subsection:12};//台阶  thickness:厚度,depth:深度,subscction:分段数
-    this.support_beam={depth:80,width:30}; //支撑梁 depth:深度,width:宽度
-    this.side_string={depth:450,width:20,offset:0}//侧弦 depth:深度,width:宽度,offset:偏移
+    this.Stair_child=true;
+    this.JSQEX_initialdata.point1=this.point1=json.point1!=undefined?json.point1:new THREE.Vector3(0,0,0);
+    this.JSQEX_initialdata.point2=this.point2=json.point2!=undefined?json.point2:new THREE.Vector3(10,0,0);
+    this.JSQEX_initialdata.tjlx=this.tjlx=json.tjlx!=undefined?json.tjlx:{open:false,close:true,floor:false};//类型 open：开放式 close：闭合式 floor：落地式 true：添加
+    this.JSQEX_initialdata.JSQEX_object_type=this.JSQEX_object_type=json.JSQEX_object_type!=undefined?json.JSQEX_object_type:{beelinetype:true,ltype:false,utype:false,spiraltype:false};
+    this.JSQEX_initialdata.addgeo=this.addgeo=json.addgeo!=undefined?json.addgeo:{side_string:false,support_beam:false};//生成几何体 side_string:侧弦 support_beam：支撑梁   true：添加
+    this.JSQEX_initialdata.layout=this.layout=json.layout!=undefined?json.layout:{length:20,width1:12,width2:12};//布局 length:长度,width:宽度
+    this.JSQEX_initialdata.step=this.step=json.step!=undefined?json.step:{height:1};//梯级 height:高度
+    this.JSQEX_initialdata.steps=this.steps=json.steps!=undefined?json.steps:{thickness:.8,depth:.0,subsection:12};//台阶  thickness:厚度,depth:深度,subscction:分段数
+    this.mrsteps={thickness:.8,depth:.0,subsection:12};
+    this.JSQEX_initialdata.support_beam=this.support_beam=json.support_beam!=undefined?json.support_beam:{depth:3.2,width:2}; //支撑梁 depth:深度,width:宽度
+    this.mrsupport_beam={depth:3.2,width:2};
+    this.JSQEX_initialdata.side_string=this.side_string=json.side_string!=undefined?json.side_string:{depth:4.0,width:.8,offset:0}//侧弦 depth:深度,width:宽度,offset:偏移
 
 }
 JSQEXBasicStructure.JSQEX_Stair_Beeline.prototype = Object.create( JSQEXBasicStructure.JSQEX_Stair.prototype );
@@ -851,82 +916,90 @@ JSQEXBasicStructure.JSQEX_Stair_Beeline.prototype.JSQEX_showgui = function(json)
     var folderCamera = gui.addFolder( '生成几何体' );
     folderCamera.add( params, '侧弦').onChange( function(val) {
        scope.addgeo.side_string=val;
-       scope.JSQEX_draw()
+       scope.JSQEX_drawstair()
     } );;
     folderCamera.add( params, '支撑梁').onChange( function(val) {
        scope.addgeo.support_beam=val;
-       scope.JSQEX_draw()
+       scope.JSQEX_drawstair()
     } );;
     folderCamera.open();
     var folderCamera = gui.addFolder( '梯级' );
-    folderCamera.add( params, '高度',1, 8000, 1).onChange( function(val) {
+    folderCamera.add( params, '高度',1, 80, 1).onChange( function(val) {
        scope.step.height=val;
-       scope.JSQEX_draw()
+       scope.JSQEX_drawstair()
     } );
     var folderCamera = gui.addFolder( '布局' );
-    folderCamera.add( params, '长度',1, 10000, 1).onChange( function(val) {
+    folderCamera.add( params, '长度',1, 100, 1).onChange( function(val) {
        scope.layout.length=val;
        scope.point1.copy(new THREE.Vector3().subVectors(scope.point1,scope.point2).normalize().multiplyScalar(val).add(scope.point2));
-       scope.JSQEX_draw()
+       scope.JSQEX_drawstair()
     } );
-    folderCamera.add( params, '宽度1',0, 5000, 1).onChange( function(val) {
+    folderCamera.add( params, '宽度1',0, 50, 1).onChange( function(val) {
        scope.layout.width1=val;
-       scope.JSQEX_draw()
+       scope.JSQEX_drawstair()
     } );
-     folderCamera.add( params, '宽度2',0, 5000, 1).onChange( function(val) {
+     folderCamera.add( params, '宽度2',0, 50, 1).onChange( function(val) {
        scope.layout.width2=val;
-       scope.JSQEX_draw()
+       scope.JSQEX_drawstair()
     } );
     folderCamera.open();
     var folderCamera = gui.addFolder( '台阶' );
-    folderCamera.add( params, '厚度',1, 512, 1).onChange( function(val) {
+    folderCamera.add( params, '厚度',0.01, 5.12, 0.01).onChange( function(val) {
        scope.steps.thickness=val;
-       scope.JSQEX_draw()
+       scope.mrsteps.thickness=val;
+       scope.JSQEX_drawstair()
 
     } );
-    folderCamera.add( params, '深度',0, 1500, 1).onChange( function(val) {
+    folderCamera.add( params, '深度',0, 15, 0.1).onChange( function(val) {
        scope.steps.depth=val;
-       scope.JSQEX_draw()
+       scope.mrsteps.depth=val;
+       scope.JSQEX_drawstair()
     } );
     folderCamera.add( params, '分段',1, 50, 1).onChange( function(val) {
        scope.steps.subsection=val;
-       scope.JSQEX_draw()
+       scope.JSQEX_drawstair()
     } );
     var folderCamera = gui.addFolder( '支撑梁' );
-    folderCamera.add( params, '深度_支',0, 8000, 1).onChange( function(val) {
+    folderCamera.add( params, '深度_支',0, 80, .1).onChange( function(val) {
         if(scope.addgeo.support_beam){
             scope.support_beam.depth=val;
-            scope.JSQEX_draw()
+            scope.mrsupport_beam.depth=val;
+            scope.JSQEX_drawstair()
         } 
     } );
-    folderCamera.add( params, '宽度_支',10, 1500, 1).onChange( function(val) {
+    folderCamera.add( params, '宽度_支',10, 15, .1).onChange( function(val) {
         if(scope.addgeo.support_beam){ 
             scope.support_beam.width=val;
-            scope.JSQEX_draw()
+            scope.mrsupport_beam.width=val;
+            scope.JSQEX_drawstair()
         }
     } );
     var folderCamera = gui.addFolder( '侧弦' );
-    folderCamera.add( params, '深度_侧',5, 1500, 1).onChange( function(val) {
+    folderCamera.add( params, '深度_侧',.5, 15, .1).onChange( function(val) {
         if(scope.addgeo.side_string){ 
             scope.side_string.depth=val;
-            scope.JSQEX_draw()
+            scope.JSQEX_drawstair()
         } 
     } );
-    folderCamera.add( params, '宽度_侧',5, 500, 1).onChange( function(val) {
+    folderCamera.add( params, '宽度_侧',0.05, 5, .01).onChange( function(val) {
         if(scope.addgeo.side_string){ 
             scope.side_string.width=val;
-            scope.JSQEX_draw()
+            scope.JSQEX_drawstair()
         }   
     } );
-    folderCamera.add( params, '偏移_侧',0, 1200, 1).onChange( function(val) {
+    folderCamera.add( params, '偏移_侧',0, 12, .1).onChange( function(val) {
         if(scope.addgeo.side_string){ 
             scope.side_string.offset=val;
-            scope.JSQEX_draw()
+            scope.JSQEX_drawstair()
         }
     } );
 }
 
 JSQEXBasicStructure.JSQEX_Stair_Beeline.prototype.JSQEX_getpoints1 = function(_json){
+    if(this.JSQEX_limitwidthnum&&this.layout.width2/2>this.JSQEX_limitwidthnum){
+        this.layout.width2=this.JSQEX_limitwidthnum*2;
+        console.log("超出地台边界！")
+    }
     var _num=this.steps.subsection;
     var object_type=this.JSQEX_object_type;
     var tjlx=this.tjlx;//类型 
@@ -951,64 +1024,93 @@ JSQEXBasicStructure.JSQEX_Stair_Beeline.prototype.JSQEX_getpoints2 = function(po
     return new THREE.Vector3().copy(point1.clone().add(fxver.multiplyScalar(perlength*index))); 
 }
 
-JSQEXBasicStructure.JSQEX_Stair.prototype.JSQEX_draw = function(json) {
-    var _json=this.JSQEX_getpoints1(json);
-    if(_json.step.height<0){
-        _json.step.height*=-1;//默认只能大于等于0
+JSQEXBasicStructure.JSQEX_Stair.prototype.JSQEX_drawstair = function(Added) {
+    if(this.__proto__===JSQEXBasicStructure.JSQEX_Stair.prototype){
+        if(this.JSQEX_stairsMesh_arr.length>0){
+            for(var i=0,j=this.JSQEX_initialdata.length;i<j;i++){
+              this.JSQEX_stairsMesh_arr[i].JSQEX_drawstair(true);
+            }
+        }else{
+            for(var i=0,j=this.JSQEX_initialdataarr.length;i<j;i++){
+                this.JSQEX_initEdit_interface(this.JSQEX_initialdataarr[i],Added);
+            }
+        }
+    }else{
+        var _json=this.JSQEX_getpoints1();
+        if(_json.step.height<0){
+            _json.step.height*=-1;//默认只能大于等于0
+        }
+        this.JSQEX_armrest=[[],[],[],[],[]];
+        this.JSQEX_dispose(); 
+        this.JSQEX_Spiralstair(_json);
+        this.JSQEX_AddStair(Added);
     }
-   this.JSQEX_armrest=[[],[],[],[],[]];
-    this.JSQEX_dispose(); 
-    this.JSQEX_Spiralstair(_json);
-    this.JSQEX_AddStair();
-}  
+}
+
+JSQEXBasicStructure.JSQEX_Stair.prototype.JSQEX_draw = function(json) {
+    this.JSQEX_drawstair(true); 
+}
+
+JSQEXBasicStructure.JSQEX_Stair.prototype.JSQEX_initdata = function(json) {
+    if(this.tjlx.close||this.tjlx.floor){
+        this.mrsteps.thickness=this.steps.thickness=this.step.height/this.steps.subsection;
+        this.mrsteps.depth=this.steps.depth=0;
+        this.mrsupport_beam.depth=this.support_beam.depth=(this.tjlx.close?(this.step.height/(this.steps.subsection+(this.JSQEX_object_type.ltype||this.JSQEX_object_type.utype?1:0))):this.step.height);
+        this.mrsupport_beam.width=this.support_beam.width=this.layout.width||this.layout.width1;
+    }
+}   
 
 JSQEXBasicStructure.JSQEX_Stair.prototype.JSQEX_changetjlx = function(json) {//open：开放式 close：闭合式 floor：落地式 true：修改
+    var Currentobjectindex=this.JSQEX_checkindex(this.JSQEX_Currentobjectindex);
     if(json.open){
-        this.JSQEX_obj.tjlx.open=json.open;
-        this.JSQEX_obj.tjlx.close=false;
-        this.JSQEX_obj.tjlx.floor=false;
+        this.JSQEX_stairsMesh_arr[Currentobjectindex].tjlx.open=json.open;
+        this.JSQEX_stairsMesh_arr[Currentobjectindex].tjlx.close=false;
+        this.JSQEX_stairsMesh_arr[Currentobjectindex].tjlx.floor=false;
     }
     if(json.close){
-        this.JSQEX_obj.tjlx.close=json.close;
-        this.JSQEX_obj.tjlx.open=false;
-        this.JSQEX_obj.tjlx.floor=false;
+        this.JSQEX_stairsMesh_arr[Currentobjectindex].tjlx.close=json.close;
+        this.JSQEX_stairsMesh_arr[Currentobjectindex].tjlx.open=false;
+        this.JSQEX_stairsMesh_arr[Currentobjectindex].tjlx.floor=false;
     }
     if(json.floor){
-        this.JSQEX_obj.tjlx.floor=json.floor;
-        this.JSQEX_obj.tjlx.close=false;
-        this.JSQEX_obj.tjlx.open=false;
+        this.JSQEX_stairsMesh_arr[Currentobjectindex].tjlx.floor=json.floor;
+        this.JSQEX_stairsMesh_arr[Currentobjectindex].tjlx.close=false;
+        this.JSQEX_stairsMesh_arr[Currentobjectindex].tjlx.open=false;
     }
-    this.JSQEX_obj.JSQEX_draw()
+    this.JSQEX_stairsMesh_arr[Currentobjectindex].JSQEX_drawstair()
 }
 
-JSQEXBasicStructure.JSQEX_Stair.prototype.JSQEX_changestairlx = function(lxnum) {//lxnum 1:螺旋楼梯 2:直线楼梯 3:U型楼梯 4:L型楼梯
-    if(this.JSQEX_data.stairlx==lxnum){
-        console.log(this.JSQEX_data.stairlx);
-        return;
-    }
-    this.JSQEX_obj.JSQEX_stairsMesh.geometry.dispose();
-    this.JSQEX_obj.JSQEX_parent.remove(this.JSQEX_obj.JSQEX_stairsMesh);
-    this.JSQEX_obj.JSQEX_stairsMesh=null;
-    this.JSQEX_data.stairlx=lxnum;
-    this.JSQEX_initEdit_interface(this.JSQEX_data);
-}
+// JSQEXBasicStructure.JSQEX_Stair.prototype.JSQEX_changestairlx = function(lxnum) {//lxnum 1:螺旋楼梯 2:直线楼梯 3:U型楼梯 4:L型楼梯
+//     if(this.JSQEX_initialdata.stairlx==lxnum){
+//         console.log(this.JSQEX_initialdata.stairlx);
+//         return;
+//     }
+//     this.JSQEX_stairsMesh_arr[this.JSQEX_Currentobjectindex-1].JSQEX_stairsMesh&&(this.JSQEX_stairsMesh_arr[this.JSQEX_Currentobjectindex-1].JSQEX_stairsMesh.geometry.dispose(),
+//     this.JSQEX_stairsMesh_arr[this.JSQEX_Currentobjectindex-1].JSQEX_container.remove(this.JSQEX_stairsMesh_arr[this.JSQEX_Currentobjectindex-1].JSQEX_stairsMesh),
+//     this.JSQEX_stairsMesh_arr[this.JSQEX_Currentobjectindex-1].JSQEX_stairsMesh=null)
+//     this.JSQEX_initialdata.stairlx=lxnum;
+//     this.JSQEX_initEdit_interface(this.JSQEX_initialdata);
+// }
 
-JSQEXBasicStructure.JSQEX_Stair_Spiral = function() {
-    JSQEXBasicStructure.JSQEX_Stair.apply(this)
-    this.center=new THREE.Vector3(0,0,0);
-    this.point1=new THREE.Vector3(0,0,0);
-    this.aStartAngle=.5*Math.PI;
-    this.aEndAngle=.5*Math.PI+1*Math.PI;
-    this.tangent=new THREE.Vector3(0,0,-1);
-    this.normal=new THREE.Vector3(0,1,0);
-    this.tjlx={open:false,close:true,floor:false};//类型 open：开放式 close：闭合式 floor：落地式 true：添加
-    this.JSQEX_object_type={beelinetype:false,ltype:false,utype:false,spiraltype:true};
-    this.addgeo={side_string:false,support_beam:false,cylinder:false};//生成几何体 side_string:侧弦 support_beam：支撑梁   true：添加
-    this.layout={radius:700,rotate:180,width:400};//布局 radius:半径,rotate:旋转,width:宽度
-    this.step={height:1000};//梯级 height:高度
-    this.steps={thickness:26,depth:20,subsection:12};//台阶  thickness:厚度,depth:深度,subscction:分段数
-    this.support_beam={depth:80,width:30}; //支撑梁 depth:深度,width:宽度
-    this.side_string={depth:450,width:20,offset:0}//侧弦 depth:深度,width:宽度,offset:偏移 
+JSQEXBasicStructure.JSQEX_Stair_Spiral = function(json) {
+    JSQEXBasicStructure.JSQEX_Stair.apply(this);
+    this.Stair_child=true;
+    this.center=json.center!=undefined?json.center:new THREE.Vector3(0,0,0);
+    this.point1=json.point1!=undefined?json.point1:new THREE.Vector3(0,0,0);
+    this.JSQEX_initialdata.angle=this.angle=json.angle!=undefined?json.angle:{aStartAngle:.5*Math.PI,aEndAngle:.5*Math.PI+1*Math.PI}
+    this.JSQEX_initialdata.tangent=this.tangent=json.tangent!=undefined?json.tangent:new THREE.Vector3(0,0,-1);
+    this.JSQEX_initialdata.normal=this.JSQEX_initialdata.normal=json.normal;//空间点的法线
+    this.circlenormal=json.circlenormal!=undefined?json.circlenormal:new THREE.Vector3(0,1,0);//圆的法线
+    this.JSQEX_initialdata.tjlx=this.tjlx=json.tjlx!=undefined?json.tjlx:{open:false,close:true,floor:false};//类型 open：开放式 close：闭合式 floor：落地式 true：添加
+    this.JSQEX_initialdata.JSQEX_object_type=this.JSQEX_object_type=json.JSQEX_object_type!=undefined?json.JSQEX_object_type:{beelinetype:false,ltype:false,utype:false,spiraltype:true};
+    this.JSQEX_initialdata.addgeo=this.addgeo=json.addgeo!=undefined?json.addgeo:{side_string:false,support_beam:false,cylinder:false};//生成几何体 side_string:侧弦 support_beam：支撑梁   true：添加
+    this.JSQEX_initialdata.layout=this.layout=json.layout!=undefined?json.layout:{radius:15,rotate:180,width:12};//布局 radius:半径,rotate:旋转,width:宽度
+    this.JSQEX_initialdata.step=this.step=json.step!=undefined?json.step:{height:1000};//梯级 height:高度
+    this.JSQEX_initialdata.steps=this.steps=json.steps!=undefined?json.steps:{thickness:.8,depth:0,subsection:12};//台阶  thickness:厚度,depth:深度,subscction:分段数
+    this.mrsteps={thickness:.12,depth:0,subsection:12};
+    this.JSQEX_initialdata.support_beam=this.support_beam=json.support_beam!=undefined?json.support_beam:{depth:3.2,width:2}; //支撑梁 depth:深度,width:宽度
+    this.mrsupport_beam={depth:3.2,width:2};
+    this.JSQEX_initialdata.side_string=this.side_string=json.side_string!=undefined?json.side_string:{depth:4,width:.8,offset:0}//侧弦 depth:深度,width:宽度,offset:偏移 
     this.uvp1,this.uvp2,this.uvp3,this.uvp4;
     this.uvbottom_sup;
     this.uvbottom_side;
@@ -1059,88 +1161,96 @@ JSQEXBasicStructure.JSQEX_Stair_Spiral.prototype.JSQEX_showgui = function(json) 
     var folderCamera = gui.addFolder( '生成几何体' );
     folderCamera.add( params, '侧弦').onChange( function(val) {
        scope.addgeo.side_string=val;
-       scope.JSQEX_draw()
+       scope.JSQEX_drawstair()
     } );;
     folderCamera.add( params, '支撑梁').onChange( function(val) {
        scope.addgeo.support_beam=val;
-       scope.JSQEX_draw()
+       scope.JSQEX_drawstair()
     } );;
     folderCamera.open();
     var folderCamera = gui.addFolder( '梯级' );
-    folderCamera.add( params, '高度',1, 8000, 1).onChange( function(val) {
+    folderCamera.add( params, '高度',1, 80, 1).onChange( function(val) {
        scope.step.height=val;
-       scope.JSQEX_draw()
+       scope.JSQEX_drawstair()
     } );
     var folderCamera = gui.addFolder( '布局' );
-    folderCamera.add( params, '半径',1, 5000, 1).onChange( function(val) {
+    folderCamera.add( params, '半径',5, 50, 1).onChange( function(val) {
        scope.layout.radius=val;
        scope.center=scope.point1.clone().add(scope.tangent.clone().multiplyScalar(val));
-       scope.JSQEX_draw()
+       scope.JSQEX_drawstair()
     } );
-    folderCamera.add( params, '旋转',0, 2000, 1).onChange( function(val) {
-       scope.aStartAngle=scope.aEndAngle-val*(Math.PI/180)*scope.JSQEX_pdnum;
+    folderCamera.add( params, '旋转',30, 1080, 1).onChange( function(val) {
+       scope.angle.aStartAngle=scope.angle.aEndAngle-val*(Math.PI/180)*scope.JSQEX_pdnum;
        scope.layout.rotate=val;
-       scope.JSQEX_draw()
+       scope.JSQEX_drawstair()
     } );
-    folderCamera.add( params, '宽度',0, 2000, 1).onChange( function(val) {
+    folderCamera.add( params, '宽度',1, 50, 1).onChange( function(val) {
        scope.layout.width=val;
-       scope.JSQEX_draw()
+       scope.JSQEX_drawstair()
     } );
     folderCamera.open();
     var folderCamera = gui.addFolder( '台阶' );
-    folderCamera.add( params, '厚度',1, 512, 1).onChange( function(val) {
+    folderCamera.add( params, '厚度',0.01, 5, 0.01).onChange( function(val) {
        scope.steps.thickness=val;
-       scope.JSQEX_draw()
+       scope.mrsteps.thickness=val;
+       scope.JSQEX_drawstair()
 
     } );
-    folderCamera.add( params, '深度',0, 1500, 1).onChange( function(val) {
+    folderCamera.add( params, '深度',0, 10, 0.01).onChange( function(val) {
        scope.steps.depth=val;
-       scope.JSQEX_draw()
+       scope.mrsteps.depth=val;
+       scope.JSQEX_drawstair()
     } );
-    folderCamera.add( params, '分段',1, 50, 1).onChange( function(val) {
+    folderCamera.add( params, '分段',3, 100, 1).onChange( function(val) {
        scope.steps.subsection=val;
-       scope.JSQEX_draw()
+       scope.JSQEX_drawstair()
     } );
     var folderCamera = gui.addFolder( '支撑梁' );
     folderCamera.add( params, '深度_支',0, 8000, 1).onChange( function(val) {
         if(scope.addgeo.support_beam){
             scope.support_beam.depth=val;
-            scope.JSQEX_draw()
+            scope.mrsupport_beam.depth=val;
+            scope.JSQEX_drawstair()
         } 
     } );
-    folderCamera.add( params, '宽度_支',10, 1500, 1).onChange( function(val) {
+    folderCamera.add( params, '宽度_支',1, 50, 1).onChange( function(val) {
         if(scope.addgeo.support_beam){ 
             scope.support_beam.width=val;
-            scope.JSQEX_draw()
+            scope.mrsupport_beam.width=val;
+            scope.JSQEX_drawstair()
         }
     } );
     var folderCamera = gui.addFolder( '侧弦' );
-    folderCamera.add( params, '深度_侧',5, 1500, 1).onChange( function(val) {
+    folderCamera.add( params, '深度_侧',.5, 10, .1).onChange( function(val) {
         if(scope.addgeo.side_string){ 
             scope.side_string.depth=val;
-            scope.JSQEX_draw()
+            scope.JSQEX_drawstair()
         } 
     } );
-    folderCamera.add( params, '宽度_侧',5, 500, 1).onChange( function(val) {
+    folderCamera.add( params, '宽度_侧',.5, 5, .1).onChange( function(val) {
         if(scope.addgeo.side_string){ 
             scope.side_string.width=val;
-            scope.JSQEX_draw()
+            scope.JSQEX_drawstair()
         }   
     } );
-    folderCamera.add( params, '偏移_侧',0, 1200, 1).onChange( function(val) {
+    folderCamera.add( params, '偏移_侧',0, 12, .1).onChange( function(val) {
         if(scope.addgeo.side_string){ 
             scope.side_string.offset=val;
-            scope.JSQEX_draw()
+            scope.JSQEX_drawstair()
         }
     } );
 }
 
 JSQEXBasicStructure.JSQEX_Stair_Spiral.prototype.JSQEX_getpoints1 = function(){
+    if(this.JSQEX_limitwidthnum&&this.layout.width/2>this.JSQEX_limitwidthnum){
+        this.layout.width=this.JSQEX_limitwidthnum*2;
+        console.log("超出地台边界！")
+    }
     var _center=this.center;
     var _radius=this.layout.radius
-    var _aStartAngle=this.aStartAngle;
-    var _aEndAngle=this.aEndAngle;
-    var normal=this.normal;
+    var _aStartAngle=this.angle.aStartAngle;
+    var _aEndAngle=this.angle.aEndAngle;
+    var normal=this.circlenormal;
     var _num=this.steps.subsection;
     var perradian=(_aEndAngle-_aStartAngle)/_num;
     var pdwidth=this.layout.width>_radius?(_radius):this.layout.width||400;
@@ -1174,44 +1284,24 @@ JSQEXBasicStructure.JSQEX_Stair_Spiral.prototype.JSQEX_getpoints2 = function(cen
 }
 
 JSQEXBasicStructure.JSQEX_Stair_Spiral.prototype.JSQEX_Spiralstair = function(json){
-    var arr=json.arr;
-    var tjhd=json.steps.thickness;
-    var allheight=json.step.height;
-    var overdistance=json.steps.depth;
-    var cxwidth=json.side_string.width;
-    var zclheight=json.support_beam.depth;
-    var pdwidth=json.layout.width/2;
-    var sidehd2=json.side_string.depth;
-    var perheight=allheight/json.steps.subsection;
-    var _offset=json.layout.offset;
-    var _pynum=json.pynum;
-    var _pypos=new THREE.Vector3(0,0,0);
-    var pdyval=0;
-    var pyy=new THREE.Vector3(0,0,0);
-    if(json.tjlx.close||json.tjlx.floor){
-        tjhd=perheight;
-        overdistance=0;
-        this.steps.thickness=tjhd;
+    if(this.tjlx.close||this.tjlx.floor){
+        this.steps.thickness=this.step.height/this.steps.subsection;
         this.steps.depth=0;
+    }else{
+        this.steps.thickness=this.mrsteps.thickness;
+        this.steps.depth=this.mrsteps.depth;
     }
+    var arr=json.arr;
     for(var i=0,j=arr.length-1;i<j;i++){
         var fxver=new THREE.Vector3().subVectors(arr[i],arr[i+1]);
-        var ver1=arr[i+1].clone().sub(json.center).multiplyScalar(-1).normalize().multiplyScalar(pdwidth*this.JSQEX_pdnum).add(arr[i+1].clone()).add(new THREE.Vector3(0,perheight*(i+1),0)); 
-        var ver2=arr[i+1].clone().sub(json.center).normalize().multiplyScalar(pdwidth*this.JSQEX_pdnum).add(arr[i+1].clone()).add(new THREE.Vector3(0,perheight*(i+1),0));
-        var ver3=arr[i].clone().sub(json.center).multiplyScalar(-1).normalize().multiplyScalar(pdwidth*this.JSQEX_pdnum).add(arr[i].clone()).add(new THREE.Vector3(0,perheight*(i+1),0)).add(fxver.clone().normalize().multiplyScalar(overdistance));
-        var ver4=arr[i].clone().sub(json.center).normalize().multiplyScalar(pdwidth*this.JSQEX_pdnum).add(arr[i].clone()).add(new THREE.Vector3(0,perheight*(i+1),0)).add(fxver.clone().normalize().multiplyScalar(overdistance));
-        var ver5=ver1.clone().sub(new THREE.Vector3(0,tjhd,0)); 
-        var ver6=ver2.clone().sub(new THREE.Vector3(0,tjhd,0));
-        var ver7=ver3.clone().sub(new THREE.Vector3(0,tjhd,0));
-        var ver8=ver4.clone().sub(new THREE.Vector3(0,tjhd,0));
-        if(!json.addgeo.side_string){
-            this.JSQEX_armrest[0].push(ver3);
-            this.JSQEX_armrest[1].push(ver4);
-            if(i==j-1){
-                this.JSQEX_armrest[0].push(ver1.clone().add(new THREE.Vector3(0,perheight,0)));
-                this.JSQEX_armrest[1].push(ver2.clone().add(new THREE.Vector3(0,perheight,0)));
-            }
-        }
+        var ver1=arr[i+1].clone().sub(json.center).multiplyScalar(-1).normalize().multiplyScalar(this.layout.width/2*this.JSQEX_pdnum).add(arr[i+1].clone()).add(new THREE.Vector3(0,this.step.height/this.steps.subsection*(i+1),0)); 
+        var ver2=arr[i+1].clone().sub(json.center).normalize().multiplyScalar(this.layout.width/2*this.JSQEX_pdnum).add(arr[i+1].clone()).add(new THREE.Vector3(0,this.step.height/this.steps.subsection*(i+1),0));
+        var ver3=arr[i].clone().sub(json.center).multiplyScalar(-1).normalize().multiplyScalar(this.layout.width/2*this.JSQEX_pdnum).add(arr[i].clone()).add(new THREE.Vector3(0,this.step.height/this.steps.subsection*(i+1),0)).add(fxver.clone().normalize().multiplyScalar(this.steps.depth));
+        var ver4=arr[i].clone().sub(json.center).normalize().multiplyScalar(this.layout.width/2*this.JSQEX_pdnum).add(arr[i].clone()).add(new THREE.Vector3(0,this.step.height/this.steps.subsection*(i+1),0)).add(fxver.clone().normalize().multiplyScalar(this.steps.depth));
+        var ver5=ver1.clone().sub(new THREE.Vector3(0,this.steps.thickness,0)); 
+        var ver6=ver2.clone().sub(new THREE.Vector3(0,this.steps.thickness,0));
+        var ver7=ver3.clone().sub(new THREE.Vector3(0,this.steps.thickness,0));
+        var ver8=ver4.clone().sub(new THREE.Vector3(0,this.steps.thickness,0));
         var _fxver=new THREE.Vector3().subVectors(ver2,ver4);
         var _normal=this.JSQEX_Getnormal(_fxver);
         if(this.JSQEX_pdnum>0){//设置uv坐标范围
@@ -1229,8 +1319,19 @@ JSQEXBasicStructure.JSQEX_Stair_Spiral.prototype.JSQEX_Spiralstair = function(js
         this.JSQEX_vertices.push(
             ver1,ver2,ver3,ver4,ver5,ver6,ver7,ver8
         )
-        // var pdarrr=[ver1,ver2,ver3,ver4,ver5,ver6,ver7,ver8];
-        // var min_max1=this.JSQEX_computeBoundingBox(pdarrr);
+        if(!json.addgeo.side_string){
+            var _offsetl_r=this.layout.width/2;
+            this.JSQEX_armrest[0].push(new THREE.Vector3().addVectors(ver1,ver3).multiplyScalar(this.JSQEX_Railingoffset.f_b).add(_normal.clone().multiplyScalar(_offsetl_r*this.JSQEX_Railingoffset.l_r)));
+            this.JSQEX_armrest[1].push(new THREE.Vector3().addVectors(ver2,ver4).multiplyScalar(this.JSQEX_Railingoffset.f_b).add(_normal.clone().multiplyScalar(_offsetl_r*this.JSQEX_Railingoffset.l_r).multiplyScalar(-1)));
+            if(i==j-1||i==0){
+                this.JSQEX_armrest[2].push(new THREE.Vector3().addVectors(ver1,ver3).multiplyScalar(this.JSQEX_Railingoffset.f_b).add(_normal.clone().multiplyScalar(_offsetl_r*this.JSQEX_Railingoffset.l_r)));
+                this.JSQEX_armrest[3].push(new THREE.Vector3().addVectors(ver2,ver4).multiplyScalar(this.JSQEX_Railingoffset.f_b).add(_normal.clone().multiplyScalar(_offsetl_r*this.JSQEX_Railingoffset.l_r).multiplyScalar(-1)));
+            }
+        }
+        if(i==j-1){
+            this.JSQEX_jdpoints=[];
+            this.JSQEX_jdpoints.push(ver1,ver2);
+        }
         //上面
         var min_max1={point1:this.uvp1,point2:this.uvp2,point3:this.uvp3,point4:this.uvp4};
         var _arr=[
@@ -1278,6 +1379,8 @@ JSQEXBasicStructure.JSQEX_Stair_Spiral.prototype.JSQEX_Spiralstair = function(js
     if(json.addgeo.side_string){//判断是否显示侧弦
         this.JSQEX_armrest[0]=[];
         this.JSQEX_armrest[1]=[];
+        this.JSQEX_armrest[2]=[];
+        this.JSQEX_armrest[3]=[];
         this.JSQEX_Addside_string(json);
     }
 }
@@ -1285,23 +1388,29 @@ JSQEXBasicStructure.JSQEX_Stair_Spiral.prototype.JSQEX_Spiralstair = function(js
 JSQEXBasicStructure.JSQEX_Stair_Spiral.prototype.JSQEX_Addsupport_beam = function(json){
     var min_maxB,Cal_vertice=[],pdBottom=[];
     var arr=json.arr;
-    var tjhd=json.steps.thickness;
-    var allheight=json.step.height;
-    var overdistance=json.steps.depth;
-    var zclheight=json.support_beam.depth;
-    var pdwidth=json.layout.width/2;
-    var perheight=allheight/json.steps.subsection;
+    var tjhd=this.steps.thickness;
+    var allheight=this.step.height;
+    var overdistance=this.steps.depth;
+    var zclheight=this.support_beam.depth;
+    var pdwidth=this.layout.width/2;
+    var perheight=allheight/this.steps.subsection;
     var pdyval=0;
-    var _widthzcl=json.support_beam.width/2;
-    if(json.tjlx.close||json.tjlx.floor){
+    var _widthzcl=this.support_beam.width/2;
+    if(this.tjlx.close||this.tjlx.floor){
         tjhd=0;
-        overdistance=0;
         _widthzcl=pdwidth;
         zclheight=perheight-tjhd;
         this.support_beam.depth=zclheight;
         this.support_beam.width=_widthzcl*2;
+    }else{
+        tjhd=this.mrsteps.thickness;
+        overdistance=this.mrsteps.depth;
+        this.support_beam.depth=this.mrsupport_beam.depth;
+        this.support_beam.width=this.mrsupport_beam.width;
+        _widthzcl=this.mrsupport_beam.width/2;
+        zclheight=this.support_beam.depth;
     }
-    if(json.tjlx.floor){
+    if(this.tjlx.floor){
         zclheight=allheight;
 
      }
@@ -1327,7 +1436,8 @@ JSQEXBasicStructure.JSQEX_Stair_Spiral.prototype.JSQEX_Addsupport_beam = functio
     }
     min_maxB=this.JSQEX_computeBoundingBox(pdBottom);
     this.uvbottom_sup=min_maxB;
-    var _pdheight=perheight+zclheight>this.step.height?this.step.height:perheight+zclheight;
+    // var _pdheight=perheight+zclheight>this.step.height?this.step.height:perheight+zclheight;
+    var _pdheight=perheight+zclheight>this.step.height-tjhd?this.step.height-tjhd:perheight+zclheight;
     for(var i=0;i<Cal_vertice.length;i++){
         if(i==j-1){//最后一阶后面
             var _arr=[
@@ -1413,8 +1523,19 @@ JSQEXBasicStructure.JSQEX_Stair_Spiral.prototype.JSQEX_Addside_string = function
         v14=new THREE.Vector3(0,-1,0).multiplyScalar(sidehd2).add(v6.clone());
         v15=new THREE.Vector3(0,-1,0).multiplyScalar(sidehd2).add(v7.clone());;
         v16=new THREE.Vector3(0,-1,0).multiplyScalar(sidehd2).add(v8.clone());
-        this.JSQEX_armrest[0].push(new THREE.Vector3().addVectors(v3,v4).multiplyScalar(.5),new THREE.Vector3().addVectors(v1,v2).multiplyScalar(.5));
-        this.JSQEX_armrest[1].push(new THREE.Vector3().addVectors(v7,v8).multiplyScalar(.5),new THREE.Vector3().addVectors(v5,v6).multiplyScalar(.5));
+        // this.JSQEX_armrest[0].push(new THREE.Vector3().addVectors(v3,v4).multiplyScalar(.5),new THREE.Vector3().addVectors(v1,v2).multiplyScalar(.5));
+        // this.JSQEX_armrest[1].push(new THREE.Vector3().addVectors(v7,v8).multiplyScalar(.5),new THREE.Vector3().addVectors(v5,v6).multiplyScalar(.5));
+        // if(i==j-1||i==0){
+        //     this.JSQEX_armrest[2].push(new THREE.Vector3().addVectors(v3,v4).multiplyScalar(.5),new THREE.Vector3().addVectors(v1,v2).multiplyScalar(.5));
+        //     this.JSQEX_armrest[3].push(new THREE.Vector3().addVectors(v7,v8).multiplyScalar(.5),new THREE.Vector3().addVectors(v5,v6).multiplyScalar(.5));
+        // }
+        var _offsetl_r=cxwidth;
+        this.JSQEX_armrest[0].push(new THREE.Vector3().addVectors(v1,v3).multiplyScalar(this.JSQEX_Railingoffset.f_b).add(normal.clone().multiplyScalar(_offsetl_r*.5).multiplyScalar(-1)));
+        this.JSQEX_armrest[1].push(new THREE.Vector3().addVectors(v5,v7).multiplyScalar(this.JSQEX_Railingoffset.f_b).add(normal.clone().multiplyScalar(_offsetl_r*.5).multiplyScalar(-1)));
+        if(i==j-1||i==0){
+            this.JSQEX_armrest[2].push(new THREE.Vector3().addVectors(v1,v3).multiplyScalar(this.JSQEX_Railingoffset.f_b).add(normal.clone().multiplyScalar(_offsetl_r*.5).multiplyScalar(-1)));
+            this.JSQEX_armrest[3].push(new THREE.Vector3().addVectors(v5,v7).multiplyScalar(this.JSQEX_Railingoffset.f_b).add(normal.clone().multiplyScalar(_offsetl_r*.5).multiplyScalar(-1)));
+        }
         var _arr=[v1,v2,v3,v4,v5,v6,v7,v8,v9,v10,v11,v12,v13,v14,v15,v16];
         this.JSQEX_pdyval(_arr,pdyval);
         this.JSQEX_vertices.push(
@@ -1425,6 +1546,10 @@ JSQEXBasicStructure.JSQEX_Stair_Spiral.prototype.JSQEX_Addside_string = function
         pdTop2.push(v5,v6,v7,v8);
         pdBottom2.push(v13,v14,v15,v16);
         Cal_vertice.push([v1,v2,v3,v4,v5,v6,v7,v8,v9,v10,v11,v12,v13,v14,v15,v16]);
+        if(i==j-1){
+            this.JSQEX_jdpoints=[];
+            this.JSQEX_jdpoints.push(v1,v6);
+        }
     }
     min_maxB1=this.JSQEX_computeBoundingBox(pdBottom1);
     min_maxT1=this.JSQEX_computeBoundingBox(pdTop1);
@@ -1509,21 +1634,24 @@ JSQEXBasicStructure.JSQEX_Stair_Spiral.prototype.JSQEX_Addside_string = function
     }
 }
 
-JSQEXBasicStructure.JSQEX_Stair_Utype = function(a) {
+JSQEXBasicStructure.JSQEX_Stair_Utype = function(json) {
     JSQEXBasicStructure.JSQEX_Stair.call(this);
+    this.Stair_child=true;
     this.point1=new THREE.Vector3(0,0,0);
     this.point2=new THREE.Vector3(0,0,0);
     this.point3=new THREE.Vector3(0,0,0);
     this.point4=new THREE.Vector3(0,0,0);
-    this.tjlx={open:false,close:false,floor:true};//类型 open：开放式 close：闭合式 floor：落地式 true：添加
-    this.JSQEX_object_type={beelinetype:false,ltype:false,utype:false,spiraltype:true};
-    this.addgeo={side_string:false,support_beam:false};//生成几何体 side_string:侧弦 support_beam：支撑梁   true：添加
-    this.layout={length1:1,subsection1:6,length2:1,subsection2:6,offset:1,width:500};//布局 length1:长度1,length2:长度2,offset:偏移,width:宽度
-    this.step={height:0};//梯级 height:高度
-    this.steps={thickness:26,depth:20,subsection:12};//台阶  thickness:厚度,depth:深度,subscction:分段数
-    this.support_beam={depth:80,width:30}; //支撑梁 depth:深度,width:宽度
-    this.side_string={depth:450,width:20,offset:0}//侧弦 depth:深度,width:宽度,offset:偏移
-    this.paltform={depth:0,width:400}
+    this.JSQEX_initialdata.tjlx=this.tjlx=json.tjlx!=undefined?json.tjlx:{open:false,close:true,floor:false};//类型 open：开放式 close：闭合式 floor：落地式 true：添加
+    this.JSQEX_initialdata.JSQEX_object_type=this.JSQEX_object_type=json.JSQEX_object_type!=undefined?json.JSQEX_object_type:{beelinetype:false,ltype:false,utype:true,spiraltype:false};
+    this.JSQEX_initialdata.addgeo=this.addgeo=json.addgeo!=undefined?json.addgeo:{side_string:false,support_beam:false};//生成几何体 side_string:侧弦 support_beam：支撑梁   true：添加
+    this.JSQEX_initialdata.layout=this.layout=json.layout!=undefined?json.layout:{length1:20,subsection1:8,length2:20,subsection2:8,offset:0,width:12};//布局 length1:长度1,length2:长度2,offset:偏移,width:宽度
+    this.JSQEX_initialdata.step=this.step=json.step!=undefined?json.step:{height:0};//梯级 height:高度
+    this.JSQEX_initialdata.steps=this.steps=json.steps!=undefined?json.steps:{thickness:.8,depth:0,subsection:16};//台阶  thickness:厚度,depth:深度,subscction:分段数
+    this.mrsteps={thickness:.8,depth:0,subsection:12};
+    this.JSQEX_initialdata.support_beam=this.support_beam=json.support_beam!=undefined?json.support_beam:{depth:3.2,width:2}; //支撑梁 depth:深度,width:宽度
+    this.mrsupport_beam={depth:3.2,width:2};
+    this.JSQEX_initialdata.side_string=this.side_string=json.side_string!=undefined?json.side_string:{depth:4.0,width:.8,offset:0}//侧弦 depth:深度,width:宽度,offset:偏移
+    this.JSQEX_initialdata.paltform=this.paltform=json.paltform!=undefined?json.paltform:{depth:0,width:10.00}
 }
 JSQEXBasicStructure.JSQEX_Stair_Utype.prototype = Object.create( JSQEXBasicStructure.JSQEX_Stair.prototype );
 // JSQEXBasicStructure.JSQEX_Stair_Utype.prototype = new Object(JSQEXBasicStructure.JSQEX_Stair.prototype);
@@ -1578,98 +1706,106 @@ JSQEXBasicStructure.JSQEX_Stair_Utype.prototype.JSQEX_showgui = function(json) {
     var folderCamera = gui.addFolder( '生成几何体' );
     folderCamera.add( params, '侧弦').onChange( function(val) {
        scope.addgeo.side_string=val;
-       scope.JSQEX_draw()
+       scope.JSQEX_drawstair()
     } );;
     folderCamera.add( params, '支撑梁').onChange( function(val) {
        scope.addgeo.support_beam=val;
-       scope.JSQEX_draw()
+       scope.JSQEX_drawstair()
     } );;
     folderCamera.open();
     var folderCamera = gui.addFolder( '梯级' );
-    folderCamera.add( params, '高度',1, 8000, 1).onChange( function(val) {
+    folderCamera.add( params, '高度',1, 80, 1).onChange( function(val) {
        scope.step.height=val;
-       scope.JSQEX_draw()
+       scope.JSQEX_drawstair()
     } );
     var folderCamera = gui.addFolder( '布局' );
-    folderCamera.add( params, '长度1',1, 5000, 1).onChange( function(val) {
+    folderCamera.add( params, '长度1',1, 50, 1).onChange( function(val) {
        scope.layout.length1=val;
        scope.point1.copy(new THREE.Vector3().subVectors(scope.point1,scope.point2).normalize().multiplyScalar(val).add(scope.point2));
-       scope.JSQEX_draw()
+       scope.JSQEX_drawstair()
     } );
     folderCamera.add( params, '分段1',1, 30, 1).onChange( function(val) {
        scope.layout.subsection1=val;
-       scope.JSQEX_draw()
+       scope.JSQEX_drawstair()
     } );
-    folderCamera.add( params, '长度2',1, 5000, 1).onChange( function(val) {
+    folderCamera.add( params, '长度2',1, 50, 1).onChange( function(val) {
        scope.layout.length2=val;
        scope.point3.copy(new THREE.Vector3().subVectors(scope.point3,scope.point4).normalize().multiplyScalar(val).add(scope.point4));
        scope.point2.copy(scope.point3);
        scope.point1.copy(new THREE.Vector3().subVectors(scope.point1,scope.point2).normalize().multiplyScalar(scope.layout.length1).add(scope.point2));
-       scope.JSQEX_draw()
+       scope.JSQEX_drawstair()
     } );
     folderCamera.add( params, '分段2',1, 30, 1).onChange( function(val) {
        scope.layout.subsection2=val;
-       scope.JSQEX_draw()
+       scope.JSQEX_drawstair()
     } );
-    folderCamera.add( params, '宽度',0, 2000, 1).onChange( function(val) {
+    folderCamera.add( params, '宽度',0, 20, 1).onChange( function(val) {
        scope.layout.width=val;
-       scope.JSQEX_draw()
+       scope.JSQEX_drawstair()
     } );
-     folderCamera.add( params, '偏移',0, 2000, 1).onChange( function(val) {
+     folderCamera.add( params, '偏移',0, 20, 1).onChange( function(val) {
        scope.layout.offset=val;
-       scope.JSQEX_draw()
+       scope.JSQEX_drawstair()
     } );
     folderCamera.open();
     var folderCamera = gui.addFolder( '台阶' );
-    folderCamera.add( params, '厚度',1, 512, 1).onChange( function(val) {
+    folderCamera.add( params, '厚度',.1, 5.12, .1).onChange( function(val) {
        scope.steps.thickness=val;
-       scope.JSQEX_draw()
+       scope.mrsteps.thickness=val;
+       scope.JSQEX_drawstair()
 
     } );
-    folderCamera.add( params, '深度',0, 1500, 1).onChange( function(val) {
+    folderCamera.add( params, '深度',0, 15, .1).onChange( function(val) {
        scope.steps.depth=val;
-       scope.JSQEX_draw()
+       scope.mrsteps.depth=val;
+       scope.JSQEX_drawstair()
     } );
     var folderCamera = gui.addFolder( '支撑梁' );
-    folderCamera.add( params, '深度_支',0, 8000, 1).onChange( function(val) {
+    folderCamera.add( params, '深度_支',0, 80, 1).onChange( function(val) {
         if(scope.addgeo.support_beam){
             scope.support_beam.depth=val;
-            scope.JSQEX_draw()
+            scope.mrsupport_beam.depth=val;
+            scope.JSQEX_drawstair()
         } 
     } );
-    folderCamera.add( params, '宽度_支',10, 1500, 1).onChange( function(val) {
+    folderCamera.add( params, '宽度_支',.10, 15, .1).onChange( function(val) {
         if(scope.addgeo.support_beam){ 
             scope.support_beam.width=val;
-            scope.JSQEX_draw()
+            scope.mrsupport_beam.width=val;
+            scope.JSQEX_drawstair()
         }
     } );
     var folderCamera = gui.addFolder( '侧弦' );
-    folderCamera.add( params, '深度_侧',5, 1500, 1).onChange( function(val) {
+    folderCamera.add( params, '深度_侧',.5, 15, .1).onChange( function(val) {
         if(scope.addgeo.side_string){ 
             scope.side_string.depth=val;
-            scope.JSQEX_draw()
+            scope.JSQEX_drawstair()
         } 
     } );
-    folderCamera.add( params, '宽度_侧',5, 500, 1).onChange( function(val) {
+    folderCamera.add( params, '宽度_侧',.05, 5, .01).onChange( function(val) {
         if(scope.addgeo.side_string){ 
             scope.side_string.width=val;
-            scope.JSQEX_draw()
+            scope.JSQEX_drawstair()
         }   
     } );
-    folderCamera.add( params, '偏移_侧',0, 1200, 1).onChange( function(val) {
+    folderCamera.add( params, '偏移_侧',0, 12, .1).onChange( function(val) {
         if(scope.addgeo.side_string){ 
             scope.side_string.offset=val;
-            scope.JSQEX_draw()
+            scope.JSQEX_drawstair()
         }
     } );
     var folderCamera = gui.addFolder( '平台' );
-    folderCamera.add( params, '宽度_平',5, 2500, 1).onChange( function(val) {
+    folderCamera.add( params, '宽度_平',.5, 25, .1).onChange( function(val) {
         scope.paltform.width=val;
-        scope.JSQEX_draw()
+        scope.JSQEX_drawstair()
     } );
 }
 
 JSQEXBasicStructure.JSQEX_Stair_Utype.prototype.JSQEX_getpoints1 = function(_json){
+    if(this.JSQEX_limitwidthnum&&this.layout.width/2>this.JSQEX_limitwidthnum){
+        this.layout.width=this.JSQEX_limitwidthnum*2;
+        console.log("超出地台边界！")
+    }
     var num1=this.layout.subsection1,num2=this.layout.subsection2,
     object_type=this.JSQEX_object_type,
     tjlx=this.tjlx,//类型 
@@ -1709,8 +1845,9 @@ JSQEXBasicStructure.JSQEX_Stair_Utype.prototype.JSQEX_getpoints2 = function(poin
     }  
 }
 
-JSQEXBasicStructure.JSQEX_Stair_Ltype = function(a) {//L型楼梯对象
+JSQEXBasicStructure.JSQEX_Stair_Ltype = function(json) {//L型楼梯对象
     JSQEXBasicStructure.JSQEX_Stair.call(this);
+    this.Stair_child=true;
     this.point1=new THREE.Vector3(0,0,0);
     this.point2=new THREE.Vector3(0,0,0);
     this.point3=new THREE.Vector3(0,0,0);
@@ -1721,15 +1858,17 @@ JSQEXBasicStructure.JSQEX_Stair_Ltype = function(a) {//L型楼梯对象
     this.ptpoint4=new THREE.Vector3(0,0,0);
     this.ptpoint5=new THREE.Vector3(0,0,0);
     this.ver1=new THREE.Vector3().subVectors(this.point4,this.point3).normalize();
-    this.tjlx={open:false,close:false,floor:true};//类型 open：开放式 close：闭合式 floor：落地式 true：添加
-    this.JSQEX_object_type={beelinetype:false,ltype:false,utype:false,spiraltype:true};
-    this.addgeo={side_string:false,support_beam:false};//生成几何体 side_string:侧弦 support_beam：支撑梁   true：添加
-    this.layout={length1:1000,subsection1:6,length2:1000,subsection2:6,offset:1,width:800,angle:90};//布局 length1:长度1,length2:长度2,offset:偏移,width:宽度,angle:角度
-    this.step={height:0};//梯级 height:高度
-    this.steps={thickness:26,depth:20,subsection:12};//台阶  thickness:厚度,depth:深度,subscction:分段数
-    this.support_beam={depth:80,width:30}; //支撑梁 depth:深度,width:宽度
-    this.side_string={depth:450,width:20,offset:0}//侧弦 depth:深度,width:宽度,offset:偏移
-    this.paltform={depth:0,width:400}
+    this.JSQEX_initialdata.tjlx=this.tjlx=json.tjlx!=undefined?json.tjlx:{open:false,close:true,floor:false};//类型 open：开放式 close：闭合式 floor：落地式 true：添加
+    this.JSQEX_initialdata.JSQEX_object_type=this.JSQEX_object_type=json.JSQEX_object_type!=undefined?json.JSQEX_object_type:{beelinetype:false,ltype:true,utype:false,spiraltype:false};
+    this.JSQEX_initialdata.addgeo=this.addgeo=json.addgeo!=undefined?json.addgeo:{side_string:false,support_beam:false};//生成几何体 side_string:侧弦 support_beam：支撑梁   true：添加
+    this.JSQEX_initialdata.layout=this.layout=json.layout!=undefined?json.layout:{length1:20.00,subsection1:8,length2:20.00,subsection2:8,offset:0,width:12.00,angle:90};//布局 length1:长度1,length2:长度2,offset:偏移,width:宽度,angle:角度
+    this.JSQEX_initialdata.step=this.step=json.step!=undefined?json.step:{height:0};//梯级 height:高度
+    this.JSQEX_initialdata.steps=this.steps=json.steps!=undefined?json.steps:{thickness:.8,depth:0,subsection:16};//台阶  thickness:厚度,depth:深度,subscction:分段数
+    this.mrsteps={thickness:.8,depth:0,subsection:16};
+    this.JSQEX_initialdata.support_beam=this.support_beam=json.support_beam!=undefined?json.support_beam:{depth:3.2,width:2}; //支撑梁 depth:深度,width:宽度
+    this.mrsupport_beam={depth:3.2,width:2};
+    this.JSQEX_initialdata.side_string=this.side_string=json.side_string!=undefined?json.side_string:{depth:4.0,width:.8,offset:0}//侧弦 depth:深度,width:宽度,offset:偏移
+    this.JSQEX_initialdata.paltform=this.paltform=json.paltform!=undefined?json.paltform:{depth:0,width:4.00}
 }
 JSQEXBasicStructure.JSQEX_Stair_Ltype.prototype = Object.create( JSQEXBasicStructure.JSQEX_Stair.prototype );
 JSQEXBasicStructure.JSQEX_Stair_Ltype.prototype.constructor = JSQEXBasicStructure.JSQEX_Stair_Ltype;
@@ -1784,98 +1923,105 @@ JSQEXBasicStructure.JSQEX_Stair_Ltype.prototype.JSQEX_showgui = function(json) {
     var folderCamera = gui.addFolder( '生成几何体' );
     folderCamera.add( params, '侧弦').onChange( function(val) {
        scope.addgeo.side_string=val;
-       scope.JSQEX_draw()
+       scope.JSQEX_drawstair()
     } );;
     folderCamera.add( params, '支撑梁').onChange( function(val) {
        scope.addgeo.support_beam=val;
-       scope.JSQEX_draw()
+       scope.JSQEX_drawstair()
     } );;
     folderCamera.open();
     var folderCamera = gui.addFolder( '梯级' );
-    folderCamera.add( params, '高度',1, 8000, 1).onChange( function(val) {
+    folderCamera.add( params, '高度',1, 80, 1).onChange( function(val) {
        scope.step.height=val;
-       scope.JSQEX_draw()
+       scope.JSQEX_drawstair()
     } );
     var folderCamera = gui.addFolder( '布局' );
-    folderCamera.add( params, '长度1',1, 5000, 1).onChange( function(val) {
+    folderCamera.add( params, '长度1',1, 50, 1).onChange( function(val) {
        scope.layout.length1=val;
        scope.point1.copy(new THREE.Vector3().subVectors(scope.point1,scope.point2).normalize().multiplyScalar(val).add(scope.point2));
-       scope.JSQEX_draw()
+       scope.JSQEX_drawstair()
     } );
     folderCamera.add( params, '分段1',1, 30, 1).onChange( function(val) {
        scope.layout.subsection1=val;
-       scope.JSQEX_draw()
+       scope.JSQEX_drawstair()
     } );
-    folderCamera.add( params, '长度2',1, 5000, 1).onChange( function(val) {
+    folderCamera.add( params, '长度2',1, 50, 1).onChange( function(val) {
        scope.layout.length2=val;
        scope.point3.copy(new THREE.Vector3().subVectors(scope.point3,scope.point4).normalize().multiplyScalar(val).add(scope.point4));
        scope.point2.copy(scope.point3);
        scope.point1.copy(scope.ver1.clone().multiplyScalar(scope.layout.length1).add(scope.point2));
-       scope.JSQEX_draw()
+       scope.JSQEX_drawstair()
     } );
     folderCamera.add( params, '分段2',1, 30, 1).onChange( function(val) {
        scope.layout.subsection2=val;
-       scope.JSQEX_draw()
+       scope.JSQEX_drawstair()
     } );
-    folderCamera.add( params, '宽度',0, 2000, 1).onChange( function(val) {
+    folderCamera.add( params, '宽度',0, 20, 1).onChange( function(val) {
        scope.layout.width=val;
-       scope.JSQEX_draw()
+       scope.JSQEX_drawstair()
     } );
-    folderCamera.add( params, '偏移',0, 2000, 1).onChange( function(val) {
+    folderCamera.add( params, '偏移',0, 20, 1).onChange( function(val) {
        scope.layout.offset=val;
-       scope.JSQEX_draw()
+       scope.JSQEX_drawstair()
     } );
     folderCamera.add( params, '角度',-90, 90, 0.001).onChange( function(val) {
        scope.layout.angle=val;
-       scope.JSQEX_draw()
+       scope.JSQEX_drawstair()
     } );
     folderCamera.open();
     var folderCamera = gui.addFolder( '台阶' );
-    folderCamera.add( params, '厚度',1, 512, 1).onChange( function(val) {
+    folderCamera.add( params, '厚度',.1, 5.12, .1).onChange( function(val) {
        scope.steps.thickness=val;
-       scope.JSQEX_draw()
+       scope.mrsteps.thickness=val;
+       scope.JSQEX_drawstair()
 
     } );
-    folderCamera.add( params, '深度',0, 1500, 1).onChange( function(val) {
+    folderCamera.add( params, '深度',0, 15, 1).onChange( function(val) {
        scope.steps.depth=val;
-       scope.JSQEX_draw()
+       scope.mrsteps.depth=val;
+       scope.JSQEX_drawstair()
     } );
     var folderCamera = gui.addFolder( '支撑梁' );
-    folderCamera.add( params, '深度_支',0, 8000, 1).onChange( function(val) {
+    folderCamera.add( params, '深度_支',0, 80, 1).onChange( function(val) {
         if(scope.addgeo.support_beam){
             scope.support_beam.depth=val;
-            scope.JSQEX_draw()
+            scope.mrsupport_beam.depth=val;
+            scope.JSQEX_drawstair()
         } 
     } );
-    folderCamera.add( params, '宽度_支',10, 1500, 1).onChange( function(val) {
+    folderCamera.add( params, '宽度_支',.10, 15, .1).onChange( function(val) {
         if(scope.addgeo.support_beam){ 
             scope.support_beam.width=val;
-            scope.JSQEX_draw()
+            scope.mrsupport_beam.width=val;
+            scope.JSQEX_drawstair()
         }
     } );
     var folderCamera = gui.addFolder( '侧弦' );
-    folderCamera.add( params, '深度_侧',5, 1500, 1).onChange( function(val) {
+    folderCamera.add( params, '深度_侧',.5, 15, .1).onChange( function(val) {
         if(scope.addgeo.side_string){ 
             scope.side_string.depth=val;
-            scope.JSQEX_draw()
+            scope.JSQEX_drawstair()
         } 
     } );
-    folderCamera.add( params, '宽度_侧',5, 500, 1).onChange( function(val) {
+    folderCamera.add( params, '宽度_侧',.05, 5, .1).onChange( function(val) {
         if(scope.addgeo.side_string){ 
             scope.side_string.width=val;
-            scope.JSQEX_draw()
+            scope.JSQEX_drawstair()
         }   
     } );
-    folderCamera.add( params, '偏移_侧',0, 1200, 1).onChange( function(val) {
+    folderCamera.add( params, '偏移_侧',0, 12, .1).onChange( function(val) {
         if(scope.addgeo.side_string){ 
             scope.side_string.offset=val;
-            scope.JSQEX_draw()
+            scope.JSQEX_drawstair()
         }
     } );
 }
 
 JSQEXBasicStructure.JSQEX_Stair_Ltype.prototype.JSQEX_getpoints1 = function(_json){
-    // this.JSQEX_pdnum==1?(this.layout.angle=Math.abs(this.layout.angle)):(this.layout.angle=-Math.abs(this.layout.angle))
+    if(this.JSQEX_limitwidthnum&&this.layout.width/2>this.JSQEX_limitwidthnum){
+        this.layout.width=this.JSQEX_limitwidthnum*2;
+        console.log("超出地台边界！")
+    }
     var _num1=this.layout.subsection1,
     _num2=this.layout.subsection2,
     object_type=this.JSQEX_object_type,
@@ -1934,48 +2080,73 @@ JSQEXBasicStructure.JSQEX_Stair.prototype.JSQEX_getRotatepoints = function(json)
     _ver2.z=_ver1.x*Math.sin(json.angle*Math.PI/180)+_ver1.z*Math.cos(json.angle*Math.PI/180);
     _ver2.normalize();
     var offset=json.offset;
-    var _length=json.width/2/Math.tan((180-Math.abs(json.angle))/2*Math.PI/180)
+    var pyl_r,pdwidth;
+    if(this.addgeo.side_string){
+        pyl_r=this.side_string.width/2;
+        pdwidth=json.width+2*this.side_string.width;
+    }else{
+        pdwidth=json.width;
+        pyl_r=pdwidth/2*this.JSQEX_Railingoffset.l_r;
+    }
+    var _length=pdwidth/2/Math.tan((180-Math.abs(json.angle))/2*Math.PI/180);
     var _ver=_ver1.clone().multiplyScalar(_length).add(_ver2.clone().multiplyScalar(_length+offset));
     var _pointxz1=_ver.clone().add(json.point2);
     var _pointxz2=_ver2.clone().multiplyScalar(json.length).add(_pointxz1);
-    var _normal=this.JSQEX_Getnormal(_ver1); 
-    var _pointxz1=_ver.clone().add(json.point2);
-    var _pointxz2=_ver2.clone().multiplyScalar(json.length).add(_pointxz1);
-    var _normal=this.JSQEX_Getnormal(_ver1);
+    var _normal=this.JSQEX_Getnormal(_ver1);  
     // if(json.addplatform){
-         if(json.angle>0){
-            this.ptpoint3=_normal.clone().multiplyScalar(-json.width/2).add(json.point2);
-            this.ptpoint4=_normal.clone().multiplyScalar(json.width/2).add(json.point2);
+        var _length1=Math.tan((Math.abs(json.angle))/2*Math.PI/180)*(pdwidth-pyl_r);
+        var _length2=Math.tan((Math.abs(json.angle))/2*Math.PI/180)*pyl_r; 
+        if(json.angle>0){
+            this.ptpoint3=_normal.clone().multiplyScalar(-pdwidth/2).add(json.point2);
+            this.ptpoint4=_normal.clone().multiplyScalar(pdwidth/2).add(json.point2);
             this.ptpoint1=this.ptpoint3.clone().add(_ver1.clone().multiplyScalar(2*_length));
             this.ptpoint2=this.ptpoint1.clone().add(_ver2.clone().multiplyScalar(2*_length+offset));
             this.ptpoint5=this.ptpoint4.clone().add(_ver2.clone().multiplyScalar(offset));
+               
+            this._ptpoint1=_normal.clone().multiplyScalar(-pdwidth/2+pyl_r).add(json.point2).add(_ver1.clone().multiplyScalar(_length1));
+            this._ptpoint2=_normal.clone().multiplyScalar(pdwidth/2-pyl_r).add(json.point2).add(_ver1.clone().multiplyScalar(_length2));
+            // this._ptpoint3=_normal.clone().multiplyScalar(-pdwidth/2+pyl_r).add(json.point2);
+            // this._ptpoint4=_normal.clone().multiplyScalar(pdwidth/2-pyl_r).add(json.point2);
+            // this._ptpoint1=this._ptpoint3.clone().add(_ver1.clone().multiplyScalar(2*_length2));
+            // this._ptpoint2=this._ptpoint1.clone().add(_ver2.clone().multiplyScalar(2*_length2+offset));
+            // this._ptpoint5=this._ptpoint4.clone().add(_ver2.clone().multiplyScalar(offset));
         }else{
-            this.ptpoint4=_normal.clone().multiplyScalar(-json.width/2).add(json.point2);
-            this.ptpoint5=_normal.clone().multiplyScalar(json.width/2).add(json.point2);
+            this.ptpoint4=_normal.clone().multiplyScalar(-pdwidth/2).add(json.point2);
+            this.ptpoint5=_normal.clone().multiplyScalar(pdwidth/2).add(json.point2);
             this.ptpoint2=this.ptpoint5.clone().add(_ver1.clone().multiplyScalar(2*_length));
             this.ptpoint1=this.ptpoint2.clone().add(_ver2.clone().multiplyScalar(2*_length+offset));
             this.ptpoint3=this.ptpoint4.clone().add(_ver2.clone().multiplyScalar(offset));
+  
+            this._ptpoint2=_normal.clone().multiplyScalar(pdwidth/2-pyl_r).add(json.point2).add(_ver1.clone().multiplyScalar(_length1));
+            this._ptpoint1=_normal.clone().multiplyScalar(-pdwidth/2+pyl_r).add(json.point2).add(_ver1.clone().multiplyScalar(_length2));
+
         }
+        // var _length1=Math.tan((Math.abs(json.angle))/2*Math.PI/180)*(json.width-pyl_r);
+        // var _length2=Math.tan((Math.abs(json.angle))/2*Math.PI/180)*pyl_r;  
+        // this._ptpoint1=_normal.clone().multiplyScalar(-json.width/2+pyl_r).add(json.point2).add(_ver1.clone().multiplyScalar(_length1));
+        // this._ptpoint2=_normal.clone().multiplyScalar(json.width/2-pyl_r).add(json.point2).add(_ver1.clone().multiplyScalar(_length2));
     // }
     return [_pointxz1,_pointxz2];
 }
 
 JSQEXBasicStructure.JSQEX_Stair_Beeline.prototype.JSQEX_Spiralstair = function(json){
+    if(this.tjlx.close||this.tjlx.floor){
+        this.steps.thickness=this.step.height/this.steps.subsection;
+        this.steps.depth=0;
+    }else{
+        this.steps.thickness=this.mrsteps.thickness;
+        this.steps.depth=this.mrsteps.depth;
+    }
     var arr=json.arr;
-    var tjhd=json.steps.thickness;
-    var allheight=json.step.height;
-    var overdistance=json.steps.depth;
-    var cxwidth=json.side_string.width;
-    var zclheight=json.support_beam.depth;
-    var pdwidth=(json.layout.width1-json.layout.width2)/json.steps.subsection
-    var perheight=allheight/json.steps.subsection;
+    var tjhd=this.steps.thickness;
+    var overdistance=this.steps.depth;
+    var cxwidth=this.side_string.width;
+    var zclheight=this.support_beam.depth;
+    var pdwidth=(this.layout.width1-this.layout.width2)/this.steps.subsection
+    var perheight=this.step.height/this.steps.subsection;
     var _pynum=json.pynum;
     var _pypos=new THREE.Vector3(0,0,0);
     var pdyval=0;
-    if(json.tjlx.close||json.tjlx.floor){
-        tjhd=perheight;
-        overdistance=0;
-    }
     var fxver_1=new THREE.Vector3().subVectors(arr[0],arr[1]);
     var normal=this.JSQEX_Getnormal(fxver_1);
     var fxver1=fxver_1.clone().normalize();
@@ -1997,12 +2168,13 @@ JSQEXBasicStructure.JSQEX_Stair_Beeline.prototype.JSQEX_Spiralstair = function(j
         var ver6=ver2.clone().sub(new THREE.Vector3(0,tjhd,0));
         var ver7=ver3.clone().sub(new THREE.Vector3(0,tjhd,0));
         var ver8=ver4.clone().sub(new THREE.Vector3(0,tjhd,0));
-        if(!json.addgeo.side_string){
-            this.JSQEX_armrest[0].push(ver3);
-            this.JSQEX_armrest[1].push(ver4);
-            if(i==j-1){
-                this.JSQEX_armrest[0].push(ver1.clone().add(new THREE.Vector3(0,perheight,0)));
-                this.JSQEX_armrest[1].push(ver2.clone().add(new THREE.Vector3(0,perheight,0)));
+        if(!json.addgeo.side_string){//前后左右移动
+            var _offsetl_r=this.layout.width1>this.layout.width2?this.layout.width2/2:this.layout.width1/2;
+            this.JSQEX_armrest[0].push(new THREE.Vector3().addVectors(ver1,ver3).multiplyScalar(this.JSQEX_Railingoffset.f_b).add(normal.clone().multiplyScalar(_offsetl_r*this.JSQEX_Railingoffset.l_r).multiplyScalar(-1)));
+            this.JSQEX_armrest[1].push(new THREE.Vector3().addVectors(ver2,ver4).multiplyScalar(this.JSQEX_Railingoffset.f_b).add(normal.clone().multiplyScalar(_offsetl_r*this.JSQEX_Railingoffset.l_r)));
+            if(i==j-1||i==0){
+                this.JSQEX_armrest[2].push(new THREE.Vector3().addVectors(ver1,ver3).multiplyScalar(this.JSQEX_Railingoffset.f_b).add(normal.clone().multiplyScalar(_offsetl_r*this.JSQEX_Railingoffset.l_r).multiplyScalar(-1)));
+                this.JSQEX_armrest[3].push(new THREE.Vector3().addVectors(ver2,ver4).multiplyScalar(this.JSQEX_Railingoffset.f_b).add(normal.clone().multiplyScalar(_offsetl_r*this.JSQEX_Railingoffset.l_r)));
             }
         }
         this.JSQEX_vertices.push(
@@ -2010,6 +2182,10 @@ JSQEXBasicStructure.JSQEX_Stair_Beeline.prototype.JSQEX_Spiralstair = function(j
         )
         var pdarrr=[ver1,ver2,ver3,ver4,ver5,ver6,ver7,ver8];
         var min_max1=this.JSQEX_computeBoundingBox(pdarrr);
+        if(i==j-1){
+            this.JSQEX_jdpoints=[];
+            this.JSQEX_jdpoints.push(ver1,ver2);
+        }
         //上面
         var _fxver=new THREE.Vector3().subVectors(ver2,ver4);
         var _normal=this.JSQEX_Getnormal(_fxver);
@@ -2087,6 +2263,8 @@ JSQEXBasicStructure.JSQEX_Stair_Beeline.prototype.JSQEX_Spiralstair = function(j
     if(json.addgeo.side_string){//判断是否显示侧弦
         this.JSQEX_armrest[0]=[];
         this.JSQEX_armrest[1]=[];
+        this.JSQEX_armrest[2]=[];
+        this.JSQEX_armrest[3]=[];
         this.JSQEX_Addside_string(json);
     }
 }
@@ -2104,13 +2282,19 @@ JSQEXBasicStructure.JSQEX_Stair_Beeline.prototype.JSQEX_Addsupport_beam = functi
     var pdyval=0;
     var _widthzcl=json.support_beam.width/2;
     if(json.tjlx.close||json.tjlx.floor){
-        tjhd=0;
+        tjhd=this.steps.thickness=0;
         overdistance=0;
         zclheight=perheight-tjhd;
         this.support_beam.depth=zclheight;
         this.support_beam.width=_widthzcl*2;
         this.steps.thickness=zclheight;
         this.steps.depth=0;
+    }else{
+        tjhd=this.mrsteps.thickness;
+        overdistance=this.mrsteps.depth;
+        zclheight=this.support_beam.depth=this.mrsupport_beam.depth;
+        this.support_beam.width=this.mrsupport_beam.width;
+        _widthzcl=this.support_beam.width/2;
     }
     if(json.tjlx.floor){
         zclheight=allheight;
@@ -2162,9 +2346,9 @@ JSQEXBasicStructure.JSQEX_Stair_Beeline.prototype.JSQEX_Addsupport_beam = functi
         min_maxB=this.JSQEX_computeBoundingBox2(pdBottom,(json.layout.width1-json.layout.width2)/2,3);
     }
     var _pdheight=perheight+zclheight>this.step.height-tjhd?this.step.height-tjhd:perheight+zclheight;
-    if(json.tjlx.close){
-        _pdheight=zclheight;
-    }
+    // if(json.tjlx.close){
+    //     _pdheight=zclheight;
+    // }
     for(var i=0,j=Cal_vertice.length;i<j;i++){
         if(Cal_vertice[i][9]!=null){
             if(i==j-1){//最后一阶后面
@@ -2298,8 +2482,13 @@ JSQEXBasicStructure.JSQEX_Stair_Beeline.prototype.JSQEX_Addside_string = functio
         var v14=new THREE.Vector3(0,-1,0).multiplyScalar(sidehd2).add(v6.clone());
         var v15=new THREE.Vector3(0,-1,0).multiplyScalar(sidehd2).add(v7.clone());
         var v16=new THREE.Vector3(0,-1,0).multiplyScalar(sidehd2).add(v8.clone());
-        this.JSQEX_armrest[0].push(new THREE.Vector3().addVectors(v3,v4).multiplyScalar(.5),new THREE.Vector3().addVectors(v1,v2).multiplyScalar(.5));
-        this.JSQEX_armrest[1].push(new THREE.Vector3().addVectors(v7,v8).multiplyScalar(.5),new THREE.Vector3().addVectors(v5,v6).multiplyScalar(.5)); 
+        var _offsetl_r=cxwidth;
+        this.JSQEX_armrest[0].push(new THREE.Vector3().addVectors(v1,v3).multiplyScalar(this.JSQEX_Railingoffset.f_b).add(normal.clone().multiplyScalar(_offsetl_r*.5).multiplyScalar(-1)));
+        this.JSQEX_armrest[1].push(new THREE.Vector3().addVectors(v5,v7).multiplyScalar(this.JSQEX_Railingoffset.f_b).add(normal.clone().multiplyScalar(_offsetl_r*.5).multiplyScalar(-1)));
+        if(i==j-1||i==0){
+            this.JSQEX_armrest[2].push(new THREE.Vector3().addVectors(v1,v3).multiplyScalar(this.JSQEX_Railingoffset.f_b).add(normal.clone().multiplyScalar(_offsetl_r*.5).multiplyScalar(-1)));
+            this.JSQEX_armrest[3].push(new THREE.Vector3().addVectors(v5,v7).multiplyScalar(this.JSQEX_Railingoffset.f_b).add(normal.clone().multiplyScalar(_offsetl_r*.5).multiplyScalar(-1)));
+        }
         var _arr=[v9,v10,v11,v12,v13,v14,v15,v16];
         if(perheight*(i+1)+json.side_string.offset-pdyval<=json.side_string.depth&&json.side_string.depth<=perheight*(i+2)+json.side_string.offset-pdyval){
             var overlong=(json.side_string.depth-json.side_string.offset-perheight)/(perheight/fxver.length())-(json.layout.length/json.steps.subsection)*i;
@@ -2325,6 +2514,10 @@ JSQEXBasicStructure.JSQEX_Stair_Beeline.prototype.JSQEX_Addside_string = functio
         pdBottom2.push(v13,v14,v15,v16);
         pdTop2.push(v5,v6,v7,v8)
         Cal_vertice.push([v1,v2,v3,v4,v5,v6,v7,v8,v9,v10,v11,v12,v13,v14,v15,v16,v17,v18,v19,v20])
+        if(i==j-1){
+            this.JSQEX_jdpoints=[];
+            this.JSQEX_jdpoints.push(v1,v6);
+        }
     }
     min_maxL1=this.JSQEX_computeBoundingBox(pdLeft1);
     min_maxR1=this.JSQEX_computeBoundingBox(pdRight1);
@@ -2471,25 +2664,23 @@ JSQEXBasicStructure.JSQEX_Stair_Beeline.prototype.JSQEX_Addside_string = functio
 }
 
 JSQEXBasicStructure.JSQEX_Stair_Utype.prototype.JSQEX_Spiralstair = function(json){
+    if(this.tjlx.close||this.tjlx.floor){
+        this.steps.thickness=this.step.height/json.num;
+        this.steps.depth=0;
+    }else{
+        this.paltform.depth=this.steps.thickness=this.mrsteps.thickness;
+        this.steps.depth=this.mrsteps.depth;
+    }
     var arr=json.arr;
-    var tjhd=json.steps.thickness;
-    var allheight=json.step.height;
-    var overdistance=json.steps.depth;
-    var pdwidth=json.layout.width/2;
-    var _offset=json.layout.offset;
+    var tjhd=this.steps.thickness;
+    var allheight=this.step.height;
+    var overdistance=this.steps.depth;
+    var pdwidth=this.layout.width/2;
+    var _offset=this.layout.offset;
     var perheight=allheight/(json.num);
     var _pynum=json.pynum;
     var _pypos=new THREE.Vector3(0,0,0);
     var pdyval=0;
-    var pyy=new THREE.Vector3(0,0,0);
-    if(json.tjlx.close||json.tjlx.floor){
-        tjhd=perheight;
-        overdistance=0;
-        this.steps.thickness=tjhd;
-        this.steps.depth=0;
-    }else{
-        this.paltform.depth=tjhd;
-    }
     for(var i=0,j=arr.length-1;i<j;i++){
         var fxver=new THREE.Vector3().subVectors(arr[i],arr[i+1]);
         var normal=this.JSQEX_Getnormal(fxver);
@@ -2501,20 +2692,34 @@ JSQEXBasicStructure.JSQEX_Stair_Utype.prototype.JSQEX_Spiralstair = function(jso
         if(i==_pynum){
             continue;
         }
-        var ver1=arr[i+1].clone().add(normal.clone().multiplyScalar(pdwidth)).add(new THREE.Vector3(0,perheight*(i+1),0)).add(_pypos).add(pyy); 
-        var ver2=arr[i+1].clone().add(normal.clone().multiplyScalar(-pdwidth)).add(new THREE.Vector3(0,perheight*(i+1),0)).add(_pypos).add(pyy);
-        var ver3=arr[i].clone().add(normal.clone().multiplyScalar(pdwidth)).add(new THREE.Vector3(0,perheight*(i+1),0)).add(fxver.clone().normalize().multiplyScalar(overdistance)).add(_pypos).add(pyy);
-        var ver4=arr[i].clone().add(normal.clone().multiplyScalar(-pdwidth)).add(new THREE.Vector3(0,perheight*(i+1),0)).add(fxver.clone().normalize().multiplyScalar(overdistance)).add(_pypos).add(pyy);
+        var ver1=arr[i+1].clone().add(normal.clone().multiplyScalar(pdwidth)).add(new THREE.Vector3(0,perheight*(i+1),0)).add(_pypos); 
+        var ver2=arr[i+1].clone().add(normal.clone().multiplyScalar(-pdwidth)).add(new THREE.Vector3(0,perheight*(i+1),0)).add(_pypos);
+        var ver3=arr[i].clone().add(normal.clone().multiplyScalar(pdwidth)).add(new THREE.Vector3(0,perheight*(i+1),0)).add(fxver.clone().normalize().multiplyScalar(overdistance)).add(_pypos);
+        var ver4=arr[i].clone().add(normal.clone().multiplyScalar(-pdwidth)).add(new THREE.Vector3(0,perheight*(i+1),0)).add(fxver.clone().normalize().multiplyScalar(overdistance)).add(_pypos);
         var ver5=ver1.clone().sub(new THREE.Vector3(0,tjhd,0)); 
         var ver6=ver2.clone().sub(new THREE.Vector3(0,tjhd,0));
         var ver7=ver3.clone().sub(new THREE.Vector3(0,tjhd,0));
         var ver8=ver4.clone().sub(new THREE.Vector3(0,tjhd,0));
         if(!json.addgeo.side_string){
-            this.JSQEX_armrest[0].push(ver3);
-            this.JSQEX_armrest[1].push(ver4);
-            if(i==j-1||i==_pynum-1){
-                this.JSQEX_armrest[0].push(ver1.clone().add(new THREE.Vector3(0,perheight,0)));
-                this.JSQEX_armrest[1].push(ver2.clone().add(new THREE.Vector3(0,perheight,0)));
+            var _offsetl_r=pdwidth;
+            if(json.pdnum>0){
+                this.JSQEX_armrest[0].push(new THREE.Vector3().addVectors(ver1,ver3).multiplyScalar(this.JSQEX_Railingoffset.f_b).add(normal.clone().multiplyScalar(_offsetl_r*this.JSQEX_Railingoffset.l_r).multiplyScalar(-1)));
+                this.JSQEX_armrest[1].push(new THREE.Vector3().addVectors(ver2,ver4).multiplyScalar(this.JSQEX_Railingoffset.f_b).add(normal.clone().multiplyScalar(_offsetl_r*this.JSQEX_Railingoffset.l_r)));
+                if(i==j-1||i==0||i==_pynum-1||i==_pynum+1){
+                    this.JSQEX_armrest[2].push(new THREE.Vector3().addVectors(ver1,ver3).multiplyScalar(this.JSQEX_Railingoffset.f_b).add(normal.clone().multiplyScalar(_offsetl_r*this.JSQEX_Railingoffset.l_r).multiplyScalar(-1)));
+                }
+                if(i==j-1||i==0){
+                    this.JSQEX_armrest[3].push(new THREE.Vector3().addVectors(ver2,ver4).multiplyScalar(this.JSQEX_Railingoffset.f_b).add(normal.clone().multiplyScalar(_offsetl_r*this.JSQEX_Railingoffset.l_r)));
+                }
+            }else{
+                this.JSQEX_armrest[1].push(new THREE.Vector3().addVectors(ver1,ver3).multiplyScalar(this.JSQEX_Railingoffset.f_b).add(normal.clone().multiplyScalar(_offsetl_r*this.JSQEX_Railingoffset.l_r).multiplyScalar(-1)));
+                this.JSQEX_armrest[0].push(new THREE.Vector3().addVectors(ver2,ver4).multiplyScalar(this.JSQEX_Railingoffset.f_b).add(normal.clone().multiplyScalar(_offsetl_r*this.JSQEX_Railingoffset.l_r)));
+                if(i==j-1||i==0||i==_pynum-1||i==_pynum+1){
+                    this.JSQEX_armrest[2].push(new THREE.Vector3().addVectors(ver2,ver4).multiplyScalar(this.JSQEX_Railingoffset.f_b).add(normal.clone().multiplyScalar(_offsetl_r*this.JSQEX_Railingoffset.l_r)));
+                }
+                if(i==j-1||i==0){
+                    this.JSQEX_armrest[3].push(new THREE.Vector3().addVectors(ver1,ver3).multiplyScalar(this.JSQEX_Railingoffset.f_b).add(normal.clone().multiplyScalar(_offsetl_r*this.JSQEX_Railingoffset.l_r).multiplyScalar(-1)));
+                }
             }
         }
         this.JSQEX_vertices.push(
@@ -2522,6 +2727,10 @@ JSQEXBasicStructure.JSQEX_Stair_Utype.prototype.JSQEX_Spiralstair = function(jso
         )
         var pdarrr=[ver1,ver2,ver3,ver4,ver5,ver6,ver7,ver8];
         var min_max1=this.JSQEX_computeBoundingBox(pdarrr);
+        if(i==j-1){
+            this.JSQEX_jdpoints=[];
+            this.JSQEX_jdpoints.push(ver1,ver2);
+        }
         //上面
         var _arr=[
             [0+ this.JSQEX_verticesnum, 2+ this.JSQEX_verticesnum, 1+ this.JSQEX_verticesnum],
@@ -2564,28 +2773,50 @@ JSQEXBasicStructure.JSQEX_Stair_Utype.prototype.JSQEX_Spiralstair = function(jso
     var normal=this.JSQEX_Getnormal(fxver);
     var mrhd=tjhd;
     if(json.tjlx.close){
+        this.paltform.depth=0;
         mrhd=perheight+this.paltform.depth>perheight*(_pynum+1)?perheight*(_pynum+1):perheight+this.paltform.depth;
     }
     if(json.tjlx.floor){
         mrhd=allheight;
     }
-    if(json.pdnum<0){
-        var ver1=arr[i].clone().add(normal.clone().multiplyScalar(3*pdwidth+_offset)).add(new THREE.Vector3(0,perheight*(i+1),0)).add(fxver.clone().normalize().multiplyScalar(-this.paltform.width)); 
-        var ver2=arr[i].clone().add(normal.clone().multiplyScalar(-pdwidth)).add(new THREE.Vector3(0,perheight*(i+1),0)).add(fxver.clone().normalize().multiplyScalar(-this.paltform.width));
-        var ver3=arr[i].clone().add(normal.clone().multiplyScalar(3*pdwidth+_offset)).add(new THREE.Vector3(0,perheight*(i+1),0));
-        var ver4=arr[i].clone().add(normal.clone().multiplyScalar(-pdwidth)).add(new THREE.Vector3(0,perheight*(i+1),0));
+    var cxwidth,pyl_r;
+    if(json.addgeo.side_string){
+        cxwidth=this.side_string.width;
+        pyl_r=cxwidth/2;
     }else{
-        var ver1=arr[i].clone().add(normal.clone().multiplyScalar(pdwidth)).add(new THREE.Vector3(0,perheight*(i+1),0)).add(fxver.clone().normalize().multiplyScalar(-this.paltform.width));
-        var ver2=arr[i].clone().add(normal.clone().multiplyScalar(-_offset-3*pdwidth)).add(new THREE.Vector3(0,perheight*(i+1),0)).add(fxver.clone().normalize().multiplyScalar(-this.paltform.width)); 
-        var ver3=arr[i].clone().add(normal.clone().multiplyScalar(pdwidth)).add(new THREE.Vector3(0,perheight*(i+1),0));
-        var ver4=arr[i].clone().add(normal.clone().multiplyScalar(-_offset-3*pdwidth)).add(new THREE.Vector3(0,perheight*(i+1),0));
-        
+        cxwidth=0;
+        pyl_r=pdwidth*this.JSQEX_Railingoffset.l_r;
     }
-    this.JSQEX_armrest[2].push(ver3,ver1,ver2,ver4);
-    if(_offset>0){
-        var dir=new THREE.Vector3().subVectors(ver4,ver3).normalize();
-        this.JSQEX_armrest[3].push(dir.clone().multiplyScalar(pdwidth*2).add(ver3),dir.clone().multiplyScalar(pdwidth*2+_offset).add(ver3));
+    if(json.pdnum<0){
+        var ver1=arr[i].clone().add(normal.clone().multiplyScalar(3*pdwidth+_offset+cxwidth)).add(new THREE.Vector3(0,perheight*(i+1),0)).add(fxver.clone().normalize().multiplyScalar(-this.paltform.width)); 
+        var ver2=arr[i].clone().add(normal.clone().multiplyScalar(-pdwidth-cxwidth)).add(new THREE.Vector3(0,perheight*(i+1),0)).add(fxver.clone().normalize().multiplyScalar(-this.paltform.width));
+        var ver3=arr[i].clone().add(normal.clone().multiplyScalar(3*pdwidth+_offset+cxwidth)).add(new THREE.Vector3(0,perheight*(i+1),0));
+        var ver4=arr[i].clone().add(normal.clone().multiplyScalar(-pdwidth-cxwidth)).add(new THREE.Vector3(0,perheight*(i+1),0));
+    }else{
+        var ver1=arr[i].clone().add(normal.clone().multiplyScalar(pdwidth+cxwidth)).add(new THREE.Vector3(0,perheight*(i+1),0)).add(fxver.clone().normalize().multiplyScalar(-this.paltform.width));
+        var ver2=arr[i].clone().add(normal.clone().multiplyScalar(-_offset-3*pdwidth-cxwidth)).add(new THREE.Vector3(0,perheight*(i+1),0)).add(fxver.clone().normalize().multiplyScalar(-this.paltform.width)); 
+        var ver3=arr[i].clone().add(normal.clone().multiplyScalar(pdwidth+cxwidth)).add(new THREE.Vector3(0,perheight*(i+1),0));
+        var ver4=arr[i].clone().add(normal.clone().multiplyScalar(-_offset-3*pdwidth-cxwidth)).add(new THREE.Vector3(0,perheight*(i+1),0));
     }
+    var _length=new THREE.Vector3().subVectors(arr[0],arr[1]).length()*this.JSQEX_Railingoffset.f_b;
+    var _ver1=this.ptpoint1=ver1.clone().add(new THREE.Vector3().subVectors(ver3,ver1).normalize().multiplyScalar(_length).add(normal.clone().multiplyScalar(pyl_r).multiplyScalar(-1)));
+    var _ver3=this.ptpoint3=ver3.clone().add(new THREE.Vector3().subVectors(ver1,ver3).normalize().multiplyScalar(_length).add(normal.clone().multiplyScalar(pyl_r).multiplyScalar(-1)));
+    var _ver2=this.ptpoint2=ver2.clone().add(new THREE.Vector3().subVectors(ver4,ver2).normalize().multiplyScalar(_length).add(normal.clone().multiplyScalar(pyl_r)));
+    var _ver4=this.ptpoint4=ver4.clone().add(new THREE.Vector3().subVectors(ver2,ver4).normalize().multiplyScalar(_length).add(normal.clone().multiplyScalar(pyl_r)));
+    if(json.pdnum>0){
+        this.JSQEX_armrest[1].splice(_pynum,0,_ver4,_ver2,_ver1,_ver3); 
+        this.JSQEX_armrest[3].splice(1,0,_ver4,_ver2,_ver1,_ver3);
+    }else{
+        this.JSQEX_armrest[1].splice(_pynum,0,_ver3,_ver1,_ver2,_ver4);
+        this.JSQEX_armrest[3].splice(1,0,_ver3,_ver1,_ver2,_ver4); 
+    }
+    // this.JSQEX_armrest[1].splice(_pynum+1,0,ver3,ver1,ver2,ver4)
+    // this.JSQEX_armrest[2].push(ver3,ver1,ver2,ver4);
+    // if(_offset>0){
+    //     var dir=new THREE.Vector3().subVectors(ver4,ver3).normalize();
+    //     this.JSQEX_armrest[0].splice(_pynum+1,0,dir.clone().multiplyScalar(pdwidth*2).add(ver3))
+    //     // this.JSQEX_armrest[3].push(dir.clone().multiplyScalar(pdwidth*2).add(ver3),dir.clone().multiplyScalar(pdwidth*2+_offset).add(ver3));
+    // }
     var ver5=ver1.clone().sub(new THREE.Vector3(0,mrhd,0)); 
     var ver6=ver2.clone().sub(new THREE.Vector3(0,mrhd,0));
     var ver7=ver3.clone().sub(new THREE.Vector3(0,mrhd,0));
@@ -2626,6 +2857,8 @@ JSQEXBasicStructure.JSQEX_Stair_Utype.prototype.JSQEX_Spiralstair = function(jso
     if(json.addgeo.side_string){//判断是否显示侧弦
         this.JSQEX_armrest[0]=[];
         this.JSQEX_armrest[1]=[];
+        this.JSQEX_armrest[2]=[];
+        this.JSQEX_armrest[3]=[];
         this.JSQEX_Addside_string(json);
     }   
 }
@@ -2654,6 +2887,12 @@ JSQEXBasicStructure.JSQEX_Stair_Utype.prototype.JSQEX_Addsupport_beam = function
         this.support_beam.width=_widthzcl*2;
         zclheight=perheight-tjhd;
         this.support_beam.depth=perheight;
+    }else{
+        tjhd=this.mrsteps.thickness;
+        overdistance=this.mrsteps.depth;
+        zclheight=this.support_beam.depth=this.mrsupport_beam.depth;
+        this.support_beam.width=this.mrsupport_beam.width;
+        _widthzcl=this.support_beam.width/2;
     }
     if(this.tjlx.floor){
         zclheight=allheight;
@@ -2905,7 +3144,6 @@ JSQEXBasicStructure.JSQEX_Stair_Utype.prototype.JSQEX_Addside_string = function(
     var _pypos=new THREE.Vector3(0,0,0);
     var pdyval=0;
     var _widthzcl=json.support_beam.width/2;
-    var pyy=new THREE.Vector3(0,1,0);
     var _uvlx=this.JSQEX_uvlx;
     for(var i=0,j=arr.length-1;i<j;i++){
         var v1=null,v2=null,v3=null,v4=null,v5=null,v6=null,v7=null,v8=null,v9=null,v10=null,v11=null,v12=null,v13=null,v14=null,v15=null,v16=null,v17=null,v18=null,v19=null,v20=null;
@@ -2929,15 +3167,15 @@ JSQEXBasicStructure.JSQEX_Stair_Utype.prototype.JSQEX_Addside_string = function(
             continue;
         }
         //左边栏上面
-        v1=arr[_num].clone().add(normal.clone().multiplyScalar(pdwidth+cxwidth)).add(new THREE.Vector3(0,perheight*(_num+1),0)).add(_cxpynum).add(_pypos).add(pyy);
-        v2=arr[_num].clone().add(normal.clone().multiplyScalar(pdwidth)).add(new THREE.Vector3(0,perheight*(_num+1),0)).add(_cxpynum).add(_pypos).add(pyy);
-        v3=arr[i].clone().add(normal.clone().multiplyScalar(pdwidth+cxwidth)).add(new THREE.Vector3(0,perheight*_num,0)).add(_cxpynum).add(_pypos).add(pyy);
-        v4=arr[i].clone().add(normal.clone().multiplyScalar(pdwidth)).add(new THREE.Vector3(0,perheight*_num,0)).add(_cxpynum).add(_pypos).add(pyy);
+        v1=arr[_num].clone().add(normal.clone().multiplyScalar(pdwidth+cxwidth)).add(new THREE.Vector3(0,perheight*(_num+1),0)).add(_cxpynum).add(_pypos);
+        v2=arr[_num].clone().add(normal.clone().multiplyScalar(pdwidth)).add(new THREE.Vector3(0,perheight*(_num+1),0)).add(_cxpynum).add(_pypos);
+        v3=arr[i].clone().add(normal.clone().multiplyScalar(pdwidth+cxwidth)).add(new THREE.Vector3(0,perheight*_num,0)).add(_cxpynum).add(_pypos);
+        v4=arr[i].clone().add(normal.clone().multiplyScalar(pdwidth)).add(new THREE.Vector3(0,perheight*_num,0)).add(_cxpynum).add(_pypos);
         //右边栏上面
-        v5=arr[_num].clone().add(normal.clone().multiplyScalar(-1).multiplyScalar(pdwidth)).add(new THREE.Vector3(0,perheight*(_num+1),0)).add(_cxpynum).add(_pypos).add(pyy);
-        v6=arr[_num].clone().add(normal.clone().multiplyScalar(-1).multiplyScalar(pdwidth+cxwidth)).add(new THREE.Vector3(0,perheight*(_num+1),0)).add(_cxpynum).add(_pypos).add(pyy);
-        v7=arr[i].clone().add(normal.clone().multiplyScalar(-1).multiplyScalar(pdwidth)).add(new THREE.Vector3(0,perheight*_num,0)).add(_cxpynum).add(_pypos).add(pyy);
-        v8=arr[i].clone().add(normal.clone().multiplyScalar(-1).multiplyScalar(pdwidth+cxwidth)).add(new THREE.Vector3(0,perheight*_num,0)).add(_cxpynum).add(_pypos).add(pyy);
+        v5=arr[_num].clone().add(normal.clone().multiplyScalar(-1).multiplyScalar(pdwidth)).add(new THREE.Vector3(0,perheight*(_num+1),0)).add(_cxpynum).add(_pypos);
+        v6=arr[_num].clone().add(normal.clone().multiplyScalar(-1).multiplyScalar(pdwidth+cxwidth)).add(new THREE.Vector3(0,perheight*(_num+1),0)).add(_cxpynum).add(_pypos);
+        v7=arr[i].clone().add(normal.clone().multiplyScalar(-1).multiplyScalar(pdwidth)).add(new THREE.Vector3(0,perheight*_num,0)).add(_cxpynum).add(_pypos);
+        v8=arr[i].clone().add(normal.clone().multiplyScalar(-1).multiplyScalar(pdwidth+cxwidth)).add(new THREE.Vector3(0,perheight*_num,0)).add(_cxpynum).add(_pypos);
         //左边栏下面
         v9=new THREE.Vector3(0,-1,0).multiplyScalar(sidehd2).add(v1.clone());
         v10=new THREE.Vector3(0,-1,0).multiplyScalar(sidehd2).add(v2.clone());
@@ -2948,8 +3186,43 @@ JSQEXBasicStructure.JSQEX_Stair_Utype.prototype.JSQEX_Addside_string = function(
         v14=new THREE.Vector3(0,-1,0).multiplyScalar(sidehd2).add(v6.clone());
         v15=new THREE.Vector3(0,-1,0).multiplyScalar(sidehd2).add(v7.clone());
         v16=new THREE.Vector3(0,-1,0).multiplyScalar(sidehd2).add(v8.clone());
-        this.JSQEX_armrest[0].push(new THREE.Vector3().addVectors(v3,v4).multiplyScalar(.5),new THREE.Vector3().addVectors(v1,v2).multiplyScalar(.5));
-        this.JSQEX_armrest[1].push(new THREE.Vector3().addVectors(v7,v8).multiplyScalar(.5),new THREE.Vector3().addVectors(v5,v6).multiplyScalar(.5));
+        if(json.pdnum>0){
+            this.JSQEX_armrest[0].push(new THREE.Vector3().addVectors(v1,v3).multiplyScalar(this.JSQEX_Railingoffset.f_b).add(normal.clone().multiplyScalar(cxwidth*.5).multiplyScalar(-1)));
+            this.JSQEX_armrest[1].push(new THREE.Vector3().addVectors(v5,v7).multiplyScalar(this.JSQEX_Railingoffset.f_b).add(normal.clone().multiplyScalar(cxwidth*.5).multiplyScalar(-1)));
+            if(json.object_type.utype){
+                if(i==j-1||i==0||i==_pynum-1||i==_pynum+1){
+                    this.JSQEX_armrest[2].push(new THREE.Vector3().addVectors(v1,v3).multiplyScalar(this.JSQEX_Railingoffset.f_b).add(normal.clone().multiplyScalar(cxwidth*.5).multiplyScalar(-1)));
+                }
+                if(i==j-1||i==0){
+                    this.JSQEX_armrest[3].push(new THREE.Vector3().addVectors(v5,v7).multiplyScalar(this.JSQEX_Railingoffset.f_b).add(normal.clone().multiplyScalar(cxwidth*.5).multiplyScalar(-1)));
+                }
+            }
+            if(json.object_type.ltype){
+                if(i==j-1||i==0||i==_pynum-1||i==_pynum+1){
+                    this.JSQEX_armrest[2].push(new THREE.Vector3().addVectors(v1,v3).multiplyScalar(this.JSQEX_Railingoffset.f_b).add(normal.clone().multiplyScalar(cxwidth*.5).multiplyScalar(-1)));
+                    this.JSQEX_armrest[3].push(new THREE.Vector3().addVectors(v5,v7).multiplyScalar(this.JSQEX_Railingoffset.f_b).add(normal.clone().multiplyScalar(cxwidth*.5).multiplyScalar(-1)));
+                }
+            }
+            
+        }else{
+            this.JSQEX_armrest[1].push(new THREE.Vector3().addVectors(v1,v3).multiplyScalar(this.JSQEX_Railingoffset.f_b).add(normal.clone().multiplyScalar(cxwidth*.5).multiplyScalar(-1)));
+            this.JSQEX_armrest[0].push(new THREE.Vector3().addVectors(v5,v7).multiplyScalar(this.JSQEX_Railingoffset.f_b).add(normal.clone().multiplyScalar(cxwidth*.5).multiplyScalar(-1)));
+            if(json.object_type.utype){
+                if(i==j-1||i==0||i==_pynum-1||i==_pynum+1){
+                    this.JSQEX_armrest[2].push(new THREE.Vector3().addVectors(v5,v7).multiplyScalar(this.JSQEX_Railingoffset.f_b).add(normal.clone().multiplyScalar(cxwidth*.5).multiplyScalar(-1)));
+                }
+                if(i==j-1||i==0){
+                    this.JSQEX_armrest[3].push(new THREE.Vector3().addVectors(v1,v3).multiplyScalar(this.JSQEX_Railingoffset.f_b).add(normal.clone().multiplyScalar(cxwidth*.5).multiplyScalar(-1)));
+                }
+            }
+            if(json.object_type.ltype){
+                if(i==j-1||i==0||i==_pynum-1||i==_pynum+1){
+                    this.JSQEX_armrest[2].push(new THREE.Vector3().addVectors(v5,v7).multiplyScalar(this.JSQEX_Railingoffset.f_b).add(normal.clone().multiplyScalar(cxwidth*.5).multiplyScalar(-1)));
+                    this.JSQEX_armrest[3].push(new THREE.Vector3().addVectors(v1,v3).multiplyScalar(this.JSQEX_Railingoffset.f_b).add(normal.clone().multiplyScalar(cxwidth*.5).multiplyScalar(-1)));
+                }
+            }
+            
+        }
         var _arr=[v1,v2,v3,v4,v5,v6,v7,v8,v9,v10,v11,v12,v13,v14,v15,v16];
         this.JSQEX_pdyval(_arr,pdyval);
         this.JSQEX_vertices.push(
@@ -2993,7 +3266,11 @@ JSQEXBasicStructure.JSQEX_Stair_Utype.prototype.JSQEX_Addside_string = function(
             pdTop22.push(v5,v6,v7,v8);
             pdBottom22.push(v13,v14,v15,v16);
         }
-        Cal_vertice.push([v1,v2,v3,v4,v5,v6,v7,v8,v9,v10,v11,v12,v13,v14,v15,v16,v17,v18,v19,v20])      
+        Cal_vertice.push([v1,v2,v3,v4,v5,v6,v7,v8,v9,v10,v11,v12,v13,v14,v15,v16,v17,v18,v19,v20]);
+        if(i==j-1){
+            this.JSQEX_jdpoints=[];
+            this.JSQEX_jdpoints.push(v1,v6);
+        }      
     }
     min_maxL1=this.JSQEX_computeBoundingBox(pdLeft11);
     min_maxR1=this.JSQEX_computeBoundingBox(pdRight11);
@@ -3153,25 +3430,41 @@ JSQEXBasicStructure.JSQEX_Stair_Utype.prototype.JSQEX_Addside_string = function(
             this.JSQEX_verticesnum+=16;
         }
     }
+    if(json.object_type.utype){
+        if(json.pdnum>0){
+            this.JSQEX_armrest[1].splice(_pynum,0,this.ptpoint4,this.ptpoint2,this.ptpoint1,this.ptpoint3);
+            this.JSQEX_armrest[3].splice(1,0,this.ptpoint4,this.ptpoint2,this.ptpoint1,this.ptpoint3);  
+        }else{
+            this.JSQEX_armrest[1].splice(_pynum,0,this.ptpoint3,this.ptpoint1,this.ptpoint2,this.ptpoint4);
+            this.JSQEX_armrest[3].splice(1,0,this.ptpoint3,this.ptpoint1,this.ptpoint2,this.ptpoint4);  
+        }
+    }
+    if(json.object_type.ltype){
+        var _v1=this._ptpoint1.clone().add(new THREE.Vector3(0,perheight*(_pynum+1),0));
+        var _v2=this._ptpoint2.clone().add(new THREE.Vector3(0,perheight*(_pynum+1),0));
+        this.JSQEX_armrest[1].splice(_pynum,0,_v1);
+        this.JSQEX_armrest[3].splice(2,0,_v1);
+        this.JSQEX_armrest[0].splice(_pynum,0,_v2);
+        this.JSQEX_armrest[2].splice(2,0,_v2);
+    }
 }
 
 JSQEXBasicStructure.JSQEX_Stair_Ltype.prototype.JSQEX_Spiralstair = function(json){
+    if(this.tjlx.close||this.tjlx.floor){
+        this.steps.thickness=this.step.height/json.num;
+        this.steps.depth=0;
+    }else{
+        this.paltform.depth=this.steps.thickness=this.mrsteps.thickness;
+        this.steps.depth=this.mrsteps.depth;
+    }
     var arr=json.arr;
-    var tjhd=json.steps.thickness;
-    var allheight=json.step.height;
-    var overdistance=json.steps.depth;
-    var pdwidth=json.layout.width/2;
+    var tjhd=this.steps.thickness;
+    var allheight=this.step.height;
+    var overdistance=this.steps.depth;
+    var pdwidth=this.layout.width/2;
     var perheight=allheight/(json.num);
     var _pynum=json.pynum;
     var pdyval=0;
-    if(json.tjlx.close||json.tjlx.floor){
-        tjhd=perheight;
-        overdistance=0;
-        this.steps.thickness=tjhd;
-        this.steps.depth=0;
-    }else{
-        this.paltform.depth=tjhd;
-    }
     for(var i=0,j=arr.length-1;i<j;i++){
         var fxver=new THREE.Vector3().subVectors(arr[i],arr[i+1]);
         var normal=this.JSQEX_Getnormal(fxver);
@@ -3187,11 +3480,11 @@ JSQEXBasicStructure.JSQEX_Stair_Ltype.prototype.JSQEX_Spiralstair = function(jso
         var v7=v3.clone().sub(new THREE.Vector3(0,tjhd,0));
         var v8=v4.clone().sub(new THREE.Vector3(0,tjhd,0));
         if(!json.addgeo.side_string){
-            this.JSQEX_armrest[0].push(v3);
-            this.JSQEX_armrest[1].push(v4);
-            if(i==j-1||i==_pynum-1){
-                this.JSQEX_armrest[0].push(v1.clone().add(new THREE.Vector3(0,perheight,0)));
-                this.JSQEX_armrest[1].push(v2.clone().add(new THREE.Vector3(0,perheight,0)));
+            this.JSQEX_armrest[0].push(new THREE.Vector3().addVectors(v1,v3).multiplyScalar(this.JSQEX_Railingoffset.f_b).add(normal.clone().multiplyScalar(pdwidth*this.JSQEX_Railingoffset.l_r).multiplyScalar(-1)));
+            this.JSQEX_armrest[1].push(new THREE.Vector3().addVectors(v2,v4).multiplyScalar(this.JSQEX_Railingoffset.f_b).add(normal.clone().multiplyScalar(pdwidth*this.JSQEX_Railingoffset.l_r)));
+            if(i==j-1||i==0||i==_pynum-1||i==_pynum+1){
+                this.JSQEX_armrest[2].push(new THREE.Vector3().addVectors(v1,v3).multiplyScalar(this.JSQEX_Railingoffset.f_b).add(normal.clone().multiplyScalar(pdwidth*this.JSQEX_Railingoffset.l_r).multiplyScalar(-1)));
+                this.JSQEX_armrest[3].push(new THREE.Vector3().addVectors(v2,v4).multiplyScalar(this.JSQEX_Railingoffset.f_b).add(normal.clone().multiplyScalar(pdwidth*this.JSQEX_Railingoffset.l_r)));
             }
         }
         this.JSQEX_vertices.push(
@@ -3199,6 +3492,10 @@ JSQEXBasicStructure.JSQEX_Stair_Ltype.prototype.JSQEX_Spiralstair = function(jso
         )
         var pdarrr=[v1,v2,v3,v4,v5,v6,v7,v8];
         var min_max1=this.JSQEX_computeBoundingBox(pdarrr);
+        if(i==j-1){
+            this.JSQEX_jdpoints=[];
+            this.JSQEX_jdpoints.push(v1,v2);
+        }
         //上面
         var _arr=[
             [0+ this.JSQEX_verticesnum, 2+ this.JSQEX_verticesnum, 1+ this.JSQEX_verticesnum],
@@ -3241,6 +3538,7 @@ JSQEXBasicStructure.JSQEX_Stair_Ltype.prototype.JSQEX_Spiralstair = function(jso
     var normal=this.JSQEX_Getnormal(fxver);
     var mrhd=tjhd;
     if(json.tjlx.close){
+        this.paltform.depth=0;
         mrhd=perheight+this.paltform.depth>perheight*(_pynum+1)?perheight*(_pynum+1):perheight+this.paltform.depth;
     }
     if(json.tjlx.floor){
@@ -3256,18 +3554,20 @@ JSQEXBasicStructure.JSQEX_Stair_Ltype.prototype.JSQEX_Spiralstair = function(jso
     var v8=v3.clone().sub(new THREE.Vector3(0,mrhd,0));
     var v9=v4.clone().sub(new THREE.Vector3(0,mrhd,0));
     var v10=v5.clone().sub(new THREE.Vector3(0,mrhd,0));
-    if(this.layout.angle>0){
-        this.JSQEX_armrest[2].push(v2,v1,v3);
-        if(json.layout.offset>0){
-           this.JSQEX_armrest[3].push(v5,v4);
-        }
+    var _length=new THREE.Vector3().subVectors(arr[0],arr[1]).length()*this.JSQEX_Railingoffset.f_b;
+    var pyl_r;
+    if(json.addgeo.side_string){
+        pyl_r=this.side_string.width/2;
     }else{
-       this.JSQEX_armrest[2].push(v1,v2,v5);
-       if(json.layout.offset>0){
-           this.JSQEX_armrest[3].push(v4,v5);
-        } 
+        pyl_r=pdwidth*this.JSQEX_Railingoffset.l_r;
     }
-     var _arr=[v1,v2,v3,v4,v5,v6,v7,v8,v9,v10];
+    var _v1=this._ptpoint1.clone().add(new THREE.Vector3(0,perheight*(i+1),0));
+    var _v2=this._ptpoint2.clone().add(new THREE.Vector3(0,perheight*(i+1),0));
+    this.JSQEX_armrest[1].splice(_pynum,0,_v1);
+    this.JSQEX_armrest[3].splice(2,0,_v1);
+    this.JSQEX_armrest[0].splice(_pynum,0,_v2);
+    this.JSQEX_armrest[2].splice(2,0,_v2);
+    var _arr=[v1,v2,v3,v4,v5,v6,v7,v8,v9,v10];
     this.JSQEX_pdyval(_arr,pdyval);
     this.JSQEX_vertices.push(
     v1,v2,v3,v4,v5,v6,v7,v8,v9,v10
@@ -3319,6 +3619,8 @@ JSQEXBasicStructure.JSQEX_Stair_Ltype.prototype.JSQEX_Spiralstair = function(jso
     if(json.addgeo.side_string){//判断是否显示侧弦
         this.JSQEX_armrest[0]=[];
         this.JSQEX_armrest[1]=[];
+        this.JSQEX_armrest[2]=[];
+        this.JSQEX_armrest[3]=[];
         this.JSQEX_Addside_string(json);
     }
 } 
@@ -3360,17 +3662,20 @@ JSQEXBasicStructure.JSQEX_Stair.prototype.JSQEX_computeBoundingBox2=function(poi
 
 JSQEXBasicStructure.JSQEX_Stair.prototype.JSQEX_Calculate_uv = function(tjlx,index,all,width,height) {//默认图片长宽相等
     var u=1,v=1;
-    var width=width!=undefined?width:512;
-    var height=height!=undefined?height:512;
+    if(width!=undefined&&height!=undefined){
+        this.JSQEX_Texturesize[index][0]=width;
+        this.JSQEX_Texturesize[index][1]=height;
+    }
     if(tjlx.beelinetype){
         if(index==0||all){
+
             if(this.layout.width1>=this.layout.width2){
                 u=new THREE.Vector3().subVectors(this.JSQEX_vertices[2],this.JSQEX_vertices[3]).length();
             }else{
                 u=new THREE.Vector3().subVectors(this.JSQEX_vertices[0],this.JSQEX_vertices[1]).length();
             }
             v=this.layout.length/this.steps.subsection+this.steps.depth;
-            this.JSQEX_Texturescale[0]=[u/width,v/height];
+            this.JSQEX_Texturescale[0]=[u/this.JSQEX_Texturesize[0][0],v/this.JSQEX_Texturesize[0][1]];
         }
         if(index==1||all){
             if(this.layout.width1>=this.layout.width2){
@@ -3379,12 +3684,12 @@ JSQEXBasicStructure.JSQEX_Stair.prototype.JSQEX_Calculate_uv = function(tjlx,ind
                 u=new THREE.Vector3().subVectors(this.JSQEX_vertices[0],this.JSQEX_vertices[1]).length();
             }
             v=this.steps.thickness;
-            this.JSQEX_Texturescale[1]=[u/width,v/height];
+            this.JSQEX_Texturescale[1]=[u/this.JSQEX_Texturesize[1][0],v/this.JSQEX_Texturesize[1][1]];
         }
         if(index==2||all){
             u=this.layout.length/this.steps.subsection+this.steps.depth;
             v=this.steps.thickness;
-            this.JSQEX_Texturescale[2]=[u/width,v/height];
+            this.JSQEX_Texturescale[2]=[u/this.JSQEX_Texturesize[2][0],v/this.JSQEX_Texturesize[2][1]];
         }
         if(index==3||all){
             if(!this.tjlx.open){
@@ -3393,7 +3698,7 @@ JSQEXBasicStructure.JSQEX_Stair.prototype.JSQEX_Calculate_uv = function(tjlx,ind
                 u=this.support_beam.width;
             }
             v=this.layout.length;
-            this.JSQEX_Texturescale[3]=[u/width,v/height];
+            this.JSQEX_Texturescale[3]=[u/this.JSQEX_Texturesize[3][0],v/this.JSQEX_Texturesize[3][1]];
         }
         if(index==4||all){
              if(!this.tjlx.open){
@@ -3401,8 +3706,11 @@ JSQEXBasicStructure.JSQEX_Stair.prototype.JSQEX_Calculate_uv = function(tjlx,ind
             }else{
                 u=this.support_beam.width;
             }
-            v=this.support_beam.depth+this.step.height/this.steps.subsection>=this.step.height?this.step.height:(this.support_beam.depth+this.step.height/this.steps.subsection-this.steps.thickness);
-            this.JSQEX_Texturescale[4]=[u/width,v/height];
+            v=this.support_beam.depth+this.step.height/this.steps.subsection>=this.step.height-this.steps.thickness?this.step.height-this.steps.thickness:(this.support_beam.depth+this.step.height/this.steps.subsection);
+            if(this.tjlx.floor){
+                v=this.step.height;
+            }
+            this.JSQEX_Texturescale[4]=[u/this.JSQEX_Texturesize[4][0],v/this.JSQEX_Texturesize[4][1]];
         }
         if(index==5||all){
             u=this.layout.length;
@@ -3410,39 +3718,39 @@ JSQEXBasicStructure.JSQEX_Stair.prototype.JSQEX_Calculate_uv = function(tjlx,ind
             if(!this.tjlx.open){
                 v=this.step.height;
             }
-            this.JSQEX_Texturescale[5]=[u/width,v/height];
+            this.JSQEX_Texturescale[5]=[u/this.JSQEX_Texturesize[5][0],v/this.JSQEX_Texturesize[5][1]];
         }
         if(index==6||all){
             v=this.layout.length;
             u=this.side_string.width+Math.abs(this.layout.width1-this.layout.width2)/2;
-            this.JSQEX_Texturescale[6]=[u/width,v/height];
+            this.JSQEX_Texturescale[6]=[u/this.JSQEX_Texturesize[6][0],v/this.JSQEX_Texturesize[6][1]];
         }
         if(index==7||all){
             u=this.side_string.width;
             v=this.side_string.depth;
-            this.JSQEX_Texturescale[7]=[u/width,v/height];
+            this.JSQEX_Texturescale[7]=[u/this.JSQEX_Texturesize[7][0],v/this.JSQEX_Texturesize[7][1]];
         }
         if(index==8||all){
             u=this.layout.length;
             v=this.side_string.depth-(this.step.height/this.steps.subsection)>this.side_string.offset?(this.step.height/this.steps.subsection)*(this.steps.subsection+1)+this.side_string.offset:(this.step.height/this.steps.subsection)*(this.steps.subsection+1)+this.side_string.offset-(this.side_string.offset+(this.step.height/this.steps.subsection)-this.side_string.depth)
-            this.JSQEX_Texturescale[8]=[u/width,v/height];
+            this.JSQEX_Texturescale[8]=[u/this.JSQEX_Texturesize[8][0],v/this.JSQEX_Texturesize[8][1]];
         }
     }else if(tjlx.utype||tjlx.ltype){
         var perheight=this.step.height/(this.layout.subsection1+this.layout.subsection2+1);
         if(index==0||all){//楼梯上下1
             u=this.layout.width;
             v=this.layout.length1/this.layout.subsection1+this.steps.depth;
-            this.JSQEX_Texturescale[0]=[u/width,v/height];
+            this.JSQEX_Texturescale[0]=[u/this.JSQEX_Texturesize[0][0],v/this.JSQEX_Texturesize[0][1]];
         }
         if(index==1||all){
             u=this.layout.width;
             v=this.steps.thickness;
-            this.JSQEX_Texturescale[1]=[u/width,v/height];
+            this.JSQEX_Texturescale[1]=[u/this.JSQEX_Texturesize[1][0],v/this.JSQEX_Texturesize[1][1]];
         }
         if(index==2||all){//楼梯左右1
             v=this.steps.thickness;
             u=this.layout.length1/this.layout.subsection1+this.steps.depth;
-            this.JSQEX_Texturescale[2]=[u/width,v/height];
+            this.JSQEX_Texturescale[2]=[u/this.JSQEX_Texturesize[2][0],v/this.JSQEX_Texturesize[2][1]];
         }
         if(index==3||all){//支撑梁下1
             u=this.support_beam.width;
@@ -3450,7 +3758,7 @@ JSQEXBasicStructure.JSQEX_Stair.prototype.JSQEX_Calculate_uv = function(tjlx,ind
             if(this.tjlx.close||this.tjlx.floor){
                 v=this.layout.length1;
             }
-            this.JSQEX_Texturescale[3]=[u/width,v/height];
+            this.JSQEX_Texturescale[3]=[u/this.JSQEX_Texturesize[3][0],v/this.JSQEX_Texturesize[3][1]];
         }
         if(index==4||all){
             u=this.support_beam.width;
@@ -3458,7 +3766,7 @@ JSQEXBasicStructure.JSQEX_Stair.prototype.JSQEX_Calculate_uv = function(tjlx,ind
             if(this.tjlx.close){
                 v=perheight+this.support_beam.depth
             }
-            this.JSQEX_Texturescale[4]=[u/width,v/height];
+            this.JSQEX_Texturescale[4]=[u/this.JSQEX_Texturesize[4][0],v/this.JSQEX_Texturesize[4][1]];
         }
         if(index==5||all){//支撑梁左右1
             if(this.tjlx.open){
@@ -3468,22 +3776,22 @@ JSQEXBasicStructure.JSQEX_Stair.prototype.JSQEX_Calculate_uv = function(tjlx,ind
                 u=this.layout.length1;
                 v=perheight*this.layout.subsection1;
             }
-            this.JSQEX_Texturescale[5]=[u/width,v/height];
+            this.JSQEX_Texturescale[5]=[u/this.JSQEX_Texturesize[5][0],v/this.JSQEX_Texturesize[5][1]];
         }
         if(index==6||all){
             v=this.layout.length1;
             u=this.side_string.width;
-            this.JSQEX_Texturescale[6]=[u/width,v/height];
+            this.JSQEX_Texturescale[6]=[u/this.JSQEX_Texturesize[6][0],v/this.JSQEX_Texturesize[6][1]];
         }
         if(index==7||all){
             u=this.side_string.width;
             v=this.side_string.depth>perheight*(this.layout.subsection1+1)?perheight*(this.layout.subsection1+1):this.side_string.depth;
-            this.JSQEX_Texturescale[7]=[u/width,v/height];
+            this.JSQEX_Texturescale[7]=[u/this.JSQEX_Texturesize[7][0],v/this.JSQEX_Texturesize[7][1]];
         }
         if(index==8||all){
             u=this.layout.length1;
             v=this.side_string.depth-perheight>this.side_string.offset?perheight*(this.layout.subsection1+1)+this.side_string.offset:perheight*(this.layout.subsection1+1)+this.side_string.offset-(this.side_string.offset+perheight-this.side_string.depth)
-            this.JSQEX_Texturescale[8]=[u/width,v/height];
+            this.JSQEX_Texturescale[8]=[u/this.JSQEX_Texturesize[8][0],v/this.JSQEX_Texturesize[8][1]];
         }
         if(index==9||all){
             if(tjlx.utype){
@@ -3495,7 +3803,7 @@ JSQEXBasicStructure.JSQEX_Stair.prototype.JSQEX_Calculate_uv = function(tjlx,ind
                 u=min_max1.max.x-min_max1.min.x;
                 v=min_max1.max.z-min_max1.min.z;
             }
-            this.JSQEX_Texturescale[9]=[u/width,v/height];
+            this.JSQEX_Texturescale[9]=[u/this.JSQEX_Texturesize[9][0],v/this.JSQEX_Texturesize[9][1]];
         }
         if(index==10||all){
             if(tjlx.utype){
@@ -3510,7 +3818,7 @@ JSQEXBasicStructure.JSQEX_Stair.prototype.JSQEX_Calculate_uv = function(tjlx,ind
             }else{
                 v=perheight*(this.layout.subsection1+1)
             }
-            this.JSQEX_Texturescale[10]=[u/width,v/height];
+            this.JSQEX_Texturescale[10]=[u/this.JSQEX_Texturesize[10][0],v/this.JSQEX_Texturesize[10][1]];
         }
         if(index==11||all){
             u=this.paltform.width;
@@ -3521,38 +3829,39 @@ JSQEXBasicStructure.JSQEX_Stair.prototype.JSQEX_Calculate_uv = function(tjlx,ind
             }else{
                 v=perheight*(this.layout.subsection1+1)
             }
-            this.JSQEX_Texturescale[11]=[u/width,v/height];
+            this.JSQEX_Texturescale[11]=[u/this.JSQEX_Texturesize[11][0],v/this.JSQEX_Texturesize[11][1]];
         }
     }else if(tjlx.spiraltype){
         if(index==0||all){
             u=new THREE.Vector3().subVectors(this.uvp1,this.uvp2).length();
             v=new THREE.Vector3().subVectors(this.uvp1,this.uvp3).length();
-            this.JSQEX_Texturescale[0]=[u/width,v/height];
+            this.JSQEX_Texturescale[0]=[u/this.JSQEX_Texturesize[0][0],v/this.JSQEX_Texturesize[0][1]];
         }
         if(index==1||all){
             u=this.layout.width;
             v=this.steps.thickness;
-            this.JSQEX_Texturescale[1]=[u/width,v/height];
+            this.JSQEX_Texturescale[1]=[u/this.JSQEX_Texturesize[1][0],v/this.JSQEX_Texturesize[1][1]];
         }
         if(index==2||all){
             u=new THREE.Vector3().subVectors(this.uvp1,this.uvp3).length();
             v=this.steps.thickness;
-            this.JSQEX_Texturescale[2]=[u/width,v/height];
+            this.JSQEX_Texturescale[2]=[u/this.JSQEX_Texturesize[2][0],v/this.JSQEX_Texturesize[2][1]];
         }
         if(index==3||all){
             if(this.uvbottom_sup!=undefined){
                  u=this.uvbottom_sup.max.x-this.uvbottom_sup.min.x;
                  v=this.uvbottom_sup.max.z-this.uvbottom_sup.min.z;
             }
-            this.JSQEX_Texturescale[3]=[u/width,v/height];
+            this.JSQEX_Texturescale[3]=[u/this.JSQEX_Texturesize[3][0],v/this.JSQEX_Texturesize[3][1]];
         }
         if(index==4||all){
             u=this.support_beam.width;
-            v=this.support_beam.depth>this.step.height?this.step.height:(this.support_beam.depth+this.step.height/this.steps.subsection);
+            v=this.support_beam.depth+this.step.height/this.steps.subsection>=this.step.height-this.steps.thickness?this.step.height-this.steps.thickness:(this.support_beam.depth+this.step.height/this.steps.subsection);
+            // v=this.support_beam.depth>this.step.height?this.step.height:(this.support_beam.depth+this.step.height/this.steps.subsection);
             if(this.tjlx.floor){
                 v=this.step.height;
             }
-            this.JSQEX_Texturescale[4]=[u/width,v/height];
+            this.JSQEX_Texturescale[4]=[u/this.JSQEX_Texturesize[4][0],v/this.JSQEX_Texturesize[4][1]];
         }
         if(index==5||all){
             u=2*Math.PI*(this.layout.radius+this.support_beam.width/2)*this.layout.rotate/360;
@@ -3560,38 +3869,310 @@ JSQEXBasicStructure.JSQEX_Stair.prototype.JSQEX_Calculate_uv = function(tjlx,ind
             if(!this.tjlx.open){
                 v=this.step.height;
             }
-            this.JSQEX_Texturescale[5]=[u/width,v/height];
+            this.JSQEX_Texturescale[5]=[u/this.JSQEX_Texturesize[5][0],v/this.JSQEX_Texturesize[5][1]];
         }
         if(index==6||all){
             if(this.uvbottom_side!=undefined){
                  u=this.uvbottom_side.max.x-this.uvbottom_side.min.x;
                  v=this.uvbottom_side.max.z-this.uvbottom_side.min.z;
             }
-            this.JSQEX_Texturescale[6]=[u/width,v/height];
+            this.JSQEX_Texturescale[6]=[u/this.JSQEX_Texturesize[6][0],v/this.JSQEX_Texturesize[6][1]];
         }
         if(index==7||all){
             u=this.side_string.width;
             v=this.side_string.depth;
-            this.JSQEX_Texturescale[7]=[u/width,v/height];
+            this.JSQEX_Texturescale[7]=[u/this.JSQEX_Texturesize[7][0],v/this.JSQEX_Texturesize[7][1]];
         }
         if(index==8||all){
             u=2*Math.PI*(this.layout.radius+this.layout.width/2+this.side_string.width)*this.layout.rotate/360;
             v=this.step.height+this.step.height/this.steps.subsection+this.side_string.offset;
-            this.JSQEX_Texturescale[8]=[u/width,v/height];
+            this.JSQEX_Texturescale[8]=[u/this.JSQEX_Texturesize[8][0],v/this.JSQEX_Texturesize[8][1]];
         }
     } 
 };
 
 JSQEXBasicStructure.JSQEX_Stair.prototype.JSQEX_changedirection=function(num) {//1:顺时针，-1:逆时针
-    if(this.JSQEX_obj.JSQEX_pdnum==num&&!this.JSQEX_obj.JSQEX_object_type.ltype||this.JSQEX_obj.JSQEX_object_type.beelinetype||(this.JSQEX_obj.JSQEX_object_type.ltype&&((this.JSQEX_obj.layout.angle<0&&num<0)||(this.JSQEX_obj.layout.angle>0&&num>0)))){
+    var Currentobjectindex=this.JSQEX_checkindex(this.JSQEX_Currentobjectindex);
+    if(this.JSQEX_stairsMesh_arr[Currentobjectindex].JSQEX_pdnum==num&&!this.JSQEX_stairsMesh_arr[Currentobjectindex].JSQEX_object_type.ltype||this.JSQEX_stairsMesh_arr[Currentobjectindex].JSQEX_object_type.beelinetype||(this.JSQEX_stairsMesh_arr[Currentobjectindex].JSQEX_object_type.ltype&&((this.JSQEX_stairsMesh_arr[Currentobjectindex].layout.angle<0&&num<0)||(this.JSQEX_stairsMesh_arr[Currentobjectindex].layout.angle>0&&num>0)))){
         return;
     }else{
-        num==1?(this.JSQEX_obj.layout.angle=Math.abs(this.JSQEX_obj.layout.angle)):(this.JSQEX_obj.layout.angle=-Math.abs(this.JSQEX_obj.layout.angle))
+        num==1?(this.JSQEX_stairsMesh_arr[Currentobjectindex].layout.angle=Math.abs(this.JSQEX_stairsMesh_arr[Currentobjectindex].layout.angle)):(this.JSQEX_stairsMesh_arr[Currentobjectindex].layout.angle=-Math.abs(this.JSQEX_stairsMesh_arr[Currentobjectindex].layout.angle))
     }
-    this.JSQEX_obj.JSQEX_pdnum=num;
-    if(this.JSQEX_obj.JSQEX_object_type.spiraltype){
-        this.JSQEX_data.length=this.JSQEX_obj.layout.radius;
-        this.JSQEX_obj.JSQEX_getpoints(this.JSQEX_data,true);
+    this.JSQEX_stairsMesh_arr[Currentobjectindex].JSQEX_pdnum=num;
+    if(this.JSQEX_stairsMesh_arr[Currentobjectindex].JSQEX_object_type.spiraltype){
+        this.JSQEX_initialdata.length=this.JSQEX_stairsMesh_arr[Currentobjectindex].layout.radius;
+        this.JSQEX_stairsMesh_arr[Currentobjectindex].JSQEX_getpoints(this.JSQEX_stairsMesh_arr[Currentobjectindex].JSQEX_initialdata,true);
     }
-    this.JSQEX_obj.JSQEX_draw();
+    this.JSQEX_stairsMesh_arr[Currentobjectindex].JSQEX_drawstair();
 }
+
+JSQEXBasicStructure.JSQEX_Stair.prototype.JSQEX_isPowerOfTwo=function(num,obj,url){//处理尺寸不为2的整次幂的贴图
+    function nearest_pow2( n ) {
+        var l = Math.log( n ) / Math.LN2;
+        return Math.pow( 2, Math.round(  l ) );
+    }
+    var _pdwidth=this.JSQEX_stairsMaterial.materials[num].map.image.width;
+    var _pdheight=this.JSQEX_stairsMaterial.materials[num].map.image.height;
+    this.JSQEX_stairsMaterial.materials[num].map.wrapS = this.JSQEX_stairsMaterial.materials[num].map.wrapT = THREE.RepeatWrapping;
+    if (THREE.Math.isPowerOfTwo(_pdwidth) === false ||
+        THREE.Math.isPowerOfTwo(_pdheight) === false) {
+        var width = nearest_pow2(_pdwidth);
+        var height = nearest_pow2(_pdheight);
+        var canvas = document.createElement('canvas');// 注意每次需要新建  否者使用同一对象 会影响贴图显示
+        var ctx = canvas.getContext('2d');
+        canvas.width = width;
+        canvas.height = height;
+        ctx.drawImage(this.JSQEX_stairsMaterial.materials[num].map.image,0,0,width,height);
+        var _repeat=this.JSQEX_stairsMaterial.materials[num].map.repeat;
+        this.JSQEX_stairsMaterial.materials[num].map = new THREE.Texture(canvas );
+        this.JSQEX_stairsMaterial.materials[num].map.wrapS = this.JSQEX_stairsMaterial.materials[num].map.wrapT = THREE.RepeatWrapping;
+        this.JSQEX_stairsMaterial.materials[num].map.repeat=_repeat;
+        this.JSQEX_stairsMaterial.materials[num].map.needsUpdate = true;
+    }
+}
+
+JSQEXBasicStructure.JSQEX_Stair.prototype.JSQEX_removeall = function(obj) {//楼梯删除
+    if(obj!=undefined){
+        this.JSQEX_removeobj(obj);
+    }else{
+        var num=this.JSQEX_stairsMesh_arr.length-1;
+        if(num<0){
+            console.log("无楼梯对象！");
+            return;
+        }
+        this.JSQEX_stairsMesh_arr[num].JSQEX_dispose(); 
+        this.JSQEX_stairsMesh_arr[num].JSQEX_stairsMesh.geometry.dispose();
+        this.JSQEX_stairsMesh_arr[num].JSQEX_container.remove(this.JSQEX_stairsMesh_arr[num].JSQEX_stairsMesh);
+        for(var i=0,j=this.JSQEX_stairsMesh_arr[num].JSQEX_stairsMesh.material.materials.length;i<j;i++){
+            this.JSQEX_stairsMesh_arr[num].JSQEX_stairsMesh.material.materials[i].map.dispose();
+            this.JSQEX_stairsMesh_arr[num].JSQEX_stairsMesh.material.materials[i].dispose();
+        }
+    　　for(var key in this.JSQEX_stairsMesh_arr[num]){
+    　　　　if(this.JSQEX_stairsMesh_arr[num].hasOwnProperty(key)) {
+                this.JSQEX_stairsMesh_arr[num][key]=null;
+            }
+    　　}
+        delete this.JSQEX_stairsMesh_arr[num];
+        this.JSQEX_stairsMesh_arr[num]=null;
+        this.JSQEX_stairsMesh_arr.pop();
+    }
+    this.JSQEX_Select_obj_remove();
+}
+
+JSQEXBasicStructure.JSQEX_Stair.prototype.JSQEX_removeobj = function(obj) {
+    var Currentobjectindex=this.JSQEX_checkindex(this.JSQEX_Currentobjectindex);
+    this.JSQEX_stairsMesh_arr[Currentobjectindex].JSQEX_dispose(); 
+    this.JSQEX_stairsMesh_arr[Currentobjectindex].JSQEX_stairsMesh.geometry.dispose();
+    for(var ii=0,j=this.JSQEX_stairsMesh_arr[Currentobjectindex].JSQEX_stairsMesh.material.materials.length;ii<j;ii++){
+        this.JSQEX_stairsMesh_arr[Currentobjectindex].JSQEX_stairsMesh.material.materials[ii].map.dispose();
+        this.JSQEX_stairsMesh_arr[Currentobjectindex].JSQEX_stairsMesh.material.materials[ii].dispose();
+    }
+    obj.JSQEX_container.remove(obj.JSQEX_stairsMesh);
+    for(var key in this.JSQEX_stairsMesh_arr[Currentobjectindex]){
+        if(this.JSQEX_stairsMesh_arr[Currentobjectindex].hasOwnProperty(key)) {
+            this.JSQEX_stairsMesh_arr[Currentobjectindex][key]=null;
+        }
+　　}
+    this.JSQEX_stairsMesh_arr[Currentobjectindex]=null;
+    this.JSQEX_stairsMesh_arr.splice(Currentobjectindex,1);
+    for(var key in this.JSQEX_initialdataarr[Currentobjectindex]){
+        if(this.JSQEX_initialdataarr[Currentobjectindex].hasOwnProperty(key)) {
+            this.JSQEX_initialdataarr[Currentobjectindex][key]=null;
+        }
+　　}
+    this.JSQEX_initialdataarr[Currentobjectindex]=null;
+    this.JSQEX_initialdataarr.splice(Currentobjectindex,1);
+}
+
+
+JSQEXBasicStructure.JSQEX_Stair.prototype.JSQEX_Select_obj = function(){//选中物体
+    var _obj=this.JSQEX_stairsMesh;
+    var _parent=this.JSQEX_container;
+    var _BoxHelper=_obj.JSQEX_entity.JSQEX_parent.JSQEX_BoxHelper!=null?_obj.JSQEX_entity.JSQEX_parent.JSQEX_BoxHelper:(_obj.JSQEX_entity.JSQEX_parent.JSQEX_BoxHelper=new THREE.BoxHelper(_obj));
+    _parent.add(_BoxHelper);
+    _BoxHelper.update( _obj );
+    _obj.JSQEX_entity.JSQEX_parent.JSQEX_Currentobjectindex=_obj.JSQEX_entity.ID;
+}
+
+JSQEXBasicStructure.JSQEX_Stair.prototype.JSQEX_Select_obj_remove = function(parent,obj){//隐藏选中物体
+   var _this=this;
+   if(this.Stair_child!=undefined){
+        _this=this.JSQEX_parent;
+   }
+    _this.JSQEX_BoxHelper&&_this.JSQEX_BoxHelper.parent&&_this.JSQEX_BoxHelper.parent.remove(_this.JSQEX_BoxHelper);
+}
+
+JSQEXBasicStructure.JSQEX_Stair.prototype.JSQEX_checkindex = function(id){//获取选中物体索引
+    var _id=id!=undefined?id:this.JSQEX_Currentobjectindex; 
+    for(var i=0,jj=this.JSQEX_stairsMesh_arr.length;i<jj;i++){
+        if(this.JSQEX_stairsMesh_arr[i].ID==_id){
+            return i;
+        }
+    }
+}
+
+JSQEXBasicStructure.JSQEX_Stair.prototype.JSQEX_screenshot = function (obj,width,height) {//计算包围盒，根据包围盒平移图形到原点，再根据包围盒更改相机参数适配图像
+    var scope=this;
+    var _obj=obj?obj:this.JSQEX_stairsMesh_arr[0];
+    var _width=width?width:window.innerWidth;
+    var _height=height?height:window.innerHeight;
+    if(!this.renderer_ss){
+        this.renderer_ss = new THREE.WebGLRenderer( {
+            antialias: true,    // to get smoother output
+            preserveDrawingBuffer: true,    // to allow screenshot
+            alpha: true
+        } );
+        this.renderer_ss.setClearColor( new THREE.Color( 0x000000 ), 0 );
+        this.renderer_ss.setSize(_width, _height);
+        document.body.appendChild( this.renderer_ss.domElement );
+        this.renderer_ss.domElement.id="JSQEX_Stair_screenshot";
+        this.camera_ss = new THREE.OrthographicCamera( _width / - 30, _width / 30, _height / 30, _height / - 30, 1, 1000 );
+        this.camera_ss.position.y=170;
+        // this.camera_ss.lookAt(new THREE.Vector3(-1,0,0));
+        this.camera_ss.up=new THREE.Vector3(-1,0,0);
+        this.camera_ss.lookAt(new THREE.Vector3(0,0,0));
+        this.scene_ss = new THREE.Scene();
+    }
+    if(this.ss_stairsMesh){
+        this.ss_stairsMesh.geometry.dispose();
+        this.scene_ss.remove(this.ss_stairsMesh);
+        if(this.ss_stairsMesh.material.materials){
+            for(var i=0,j=this.ss_stairsMesh.material.materials.length;i<j;i++){
+                this.ss_stairsMesh.material.materials[i].map.dispose();
+                this.ss_stairsMesh.material.materials[i].dispose();
+            }
+        }else{
+            this.ss_stairsMesh.material.map&&this.ss_stairsMesh.material.map.dispose();
+            this.ss_stairsMesh.material.dispose();
+        }
+        
+    }
+    this.ss_geom=_obj.JSQEX_stairsMesh.geometry.clone();
+    var materials=[];
+    for(var i=0,j=_obj.JSQEX_stairsMesh.material.materials.length;i<j;i++){
+        materials.push(new THREE.MeshBasicMaterial());
+        materials[i].map= _obj.JSQEX_stairsMesh.material.materials[i].map.clone();
+    }
+    this.ss_material = new THREE.MultiMaterial( materials );
+    this.ss_geom.computeFaceNormals();
+    this.ss_stairsMesh = new THREE.Mesh( this.ss_geom, this.ss_material );
+    this.scene_ss.add(this.ss_stairsMesh);
+    this.renderer_ss.render( this.scene_ss, this.camera_ss );//关键代码  
+    var rangever=this.JSQEX_computeBoundingBox(this.ss_stairsMesh.geometry.vertices);
+    console.log(rangever);
+    var offsetx=(rangever.max.x-rangever.min.x)/2;
+    var offsety=(rangever.max.y-rangever.min.y)/2;
+    var offsetz=(rangever.max.z-rangever.min.z)/2;
+    //平移到原点
+    this.ss_stairsMesh.translateX(offsetx-rangever.max.x);
+    this.ss_stairsMesh.translateY(offsety-rangever.max.y);
+    this.ss_stairsMesh.translateZ(offsetz-rangever.max.z);
+    // this.ss_stairsMesh.updateMatrixWorld();
+    // this.ss_geom.applyMatrix(this.ss_stairsMesh.matrixWorld);
+    //根据相机上方向计算投影矩阵
+    if(this.camera_ss.up.equals(new THREE.Vector3(0,0,-1))||this.camera_ss.up.equals(new THREE.Vector3(0,0,-1))){
+        if(offsetx/offsetz>_width/_height){//判断投影区域是以x轴还是z轴为基准
+            this.camera_ss.left=-offsetx;
+            this.camera_ss.right=offsetx;
+            this.camera_ss.top=offsetx*_height/_width;
+            this.camera_ss.bottom=-offsetx*_height/_width;
+        }else{
+            this.camera_ss.left=-offsetz*_width/_height;
+            this.camera_ss.right=offsetz*_width/_height;
+            this.camera_ss.top=offsetz;
+            this.camera_ss.bottom=-offsetz;
+        }
+    }
+    if(this.camera_ss.up.equals(new THREE.Vector3(-1,0,0))||this.camera_ss.up.equals(new THREE.Vector3(1,0,0))){
+        if(offsetx/offsetz>_height/_width){//判断投影区域是以x轴还是z轴为基准
+            this.camera_ss.left=-offsetx*_width/_height;
+            this.camera_ss.right=offsetx*_width/_height;
+            this.camera_ss.top=offsetx;
+            this.camera_ss.bottom=-offsetx;
+        }else{
+            this.camera_ss.left=-offsetz;
+            this.camera_ss.right=offsetz;
+            this.camera_ss.top=offsetz*_height/_width;
+            this.camera_ss.bottom=-offsetz*_height/_width;
+        };
+    }
+    
+    this.camera_ss.updateProjectionMatrix();
+    // var rangever=this.JSQEX_computeBoundingBox(this.ss_stairsMesh.geometry.vertices);
+    //重新计算包围盒
+    var _rangevermax=new THREE.Vector3(offsetx,offsety,offsetz);
+    var max=get_projector(_rangevermax);
+    max.x=Math.min(max.x,_width);//限制在屏幕可见区域内
+    max.y=Math.min(max.y,_height);
+    max.x=Math.max(max.x,0);//限制在屏幕可见区域内
+    max.y=Math.max(max.y,0);
+    var _rangevermin=new THREE.Vector3(-offsetx,-offsety,-offsetz);
+    var min=get_projector(_rangevermin);
+    min.x=Math.min(min.x,_width);//限制在屏幕可见区域内
+    min.y=Math.min(min.y,_height);
+    min.x=Math.max(min.x,0);//限制在屏幕可见区域内
+    min.y=Math.max(min.y,0);
+    var image=new Image();
+    image.width=_width;
+    image.height=_height;
+    // animatess();
+    this.renderer_ss.render( this.scene_ss, this.camera_ss );//关键代码  绘制下一帧
+    image.src=this.renderer_ss.domElement.toDataURL();
+    image.onload = function () {
+        var canvas = document.createElement('canvas');
+        var ctx = canvas.getContext('2d');
+        var w=Math.abs(max.x-min.x);
+        var h=Math.abs(max.y-min.y);
+        var min_x=Math.min(max.x,min.x);
+        var max_x=Math.max(max.x,min.x);
+        var min_y=Math.min(max.y,min.y)
+        var max_y=Math.max(max.y,min.y)
+        canvas.width = w;
+        canvas.height = h;
+        ctx.drawImage(image,min_x,min_y,w,h,0,0,w,h);
+        // ctx.drawImage(image,0,0,window.innerWidth,window.innerHeight);
+        var newwin=window.open()
+        myimg=newwin.document.createElement("img")
+        myimg.src=canvas.toDataURL()
+        newwin.document.body.appendChild(myimg)
+    }
+    function get_projector(world_vector){
+        if (world_vector) {
+            var HalfBrowseWidth = _width/ 2;
+            var HalfBrowseHeight = _height / 2;
+            var checkCam = scope.camera_ss;
+            var vector = world_vector.project(checkCam);
+            var result = {
+                x: Math.round(vector.x * HalfBrowseWidth + HalfBrowseWidth),
+                y: Math.round(-vector.y * HalfBrowseHeight + HalfBrowseHeight)
+            };
+            console.log(result);
+            return result;
+        }
+        else {
+            return { x: 0, y: 0 };
+        }
+    }
+    // animatess()
+    // function animatess() {
+    //     requestAnimationFrame( animatess );
+    //     scope.renderer_ss.render( scope.scene_ss, scope.camera_ss );
+    // } 
+}
+
+JSQEXBasicStructure.JSQEX_Stair.prototype.JSQEX_checkarr = function(_arr){//处理栏杆xz平面相连的点的重叠数据
+   for(var i=0,jj=_arr.length;i<jj;i++){
+        if(_arr[i+1]&&JSQEXMathematics.JSQEX_abs_nearlyEquals(_arr[i].x,_arr[i+1].x)&&JSQEXMathematics.JSQEX_abs_nearlyEquals(_arr[i].z,_arr[i+1].z)){
+            _arr.splice(i+1,1);
+            i--;
+            jj--;
+        }
+    }
+    return _arr;
+}
+
+JSQEXBasicStructure.JSQEX_Stair.prototype.JSQEX_getjdpoints = function(){
+   return this.JSQEX_jdpoints;
+}
+
+
