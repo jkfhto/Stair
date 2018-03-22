@@ -29,9 +29,9 @@ var camera, scene, renderer;
 function init() {
 
                 // camera = new THREE.PerspectiveCamera( 70, window.innerWidth / window.innerHeight, 1, 100000 );
-                camera =new THREE.OrthographicCamera( window.innerWidth / - .2, window.innerWidth / .2, window.innerHeight / .2, window.innerHeight / - .2, 1, 100000 );
+                camera =new THREE.OrthographicCamera( window.innerWidth / - 20, window.innerWidth / 20, window.innerHeight / 20, window.innerHeight / - 20, 1, 100000 );
                 // camera.position.z = 400;
-                camera.position.y=7000;
+                camera.position.y=70;
                 scene = new THREE.Scene();
                 var axes = new THREE.AxisHelper( 2000 );
                 scene.add(axes);
@@ -50,7 +50,7 @@ function init() {
                 document.body.appendChild( renderer.domElement );
                 stair = new JSQEXBasicStructure.JSQEX_Stair();
                 // aa=new JSQEXCommands.JSQEX_StairEditor(stair,renderer.domElement);
-                stair.JSQEX_initEdit_interface({stairlx:1,normal:new THREE.Vector3(1,0,0),point:new THREE.Vector3(0,0,-0),height:3000,addgui:true,length:2000,obj:scene});
+                stair.JSQEX_initEdit_interface({stairlx:1,normal:new THREE.Vector3(1,0,0),point:new THREE.Vector3(0,0,-0),height:30,addgui:true,length:20,obj:scene});
                 renderer.domElement.id="staircanvas";
                 window.addEventListener( 'resize', onWindowResize, false );
             }

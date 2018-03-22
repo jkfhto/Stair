@@ -691,21 +691,21 @@ JSQEXBasicStructure.JSQEX_Stair.prototype.JSQEX_AddStair = function(Added){//在
         var materials=[];
         // this.JSQEX_initialdata.materials=[];
         for(var i=0;i<9;i++){
-             materials.push(new THREE.MeshPhongMaterial());
+             materials.push(new THREE.MeshBasicMaterial());
              var _obj=this.JSQEX_initialdata.materials[i]!=undefined?this.JSQEX_initialdata.materials[i]:{"mode":"mould","nValue":2,"nUnits":1,"map":[0],"value":[8,8],"cycle":[["a","0"],["0","b"],["-a","0"],["0","-b"]],"position":[["0","0"]],"clipSize":[["a","b"]],"radius":[["0","0","0","0"]],"src":["http://res.gezlife.com/resource/Imgs/uploads/model/201706/13/155995L/155995_UV_COS.jpg"],"realSize":[[8,8]],"type":"A","id":["B_157527_160621_157527"],"backupSrc":[[]],"model":["富之岛/富丽/450"],"matRotate":["0"],"bgRefSrc":"","reflexParameter":[""],"blurValue":["0.85"],"reflexMinQuality":[""],"reflexMidQuality":[""],"reflexMaxQuality":[""],"map_yy":[""],"map_gg":[""],"map_fx":[""],"map_zh":[""],"refSrc":[""],"chamferRanges":[[true,true,true,true]],"normals":[1],"method":"roll","rotation":"0","paveDetail":{"ifAngle":[false],"angleEdge":["5"],"ifPave":true,"paveType":"","paveData":{"paveWay":"roll","paveDire":"0","paveSize":"4"}},"rotCenter":{"x":0,"y":0},"lines":[0.03],"bgSrc":"common/images/color/c_cement.jpg?13","lineWidth":0.03};
              this.JSQEX_initialdata.materials.push(_obj);
              materials[i].map= THREE.ImageUtils.loadTexture(_obj.src,null,this.JSQEX_isPowerOfTwo.bind(this,i));
         }
         if(this.JSQEX_object_type.ltype||this.JSQEX_object_type.utype){
             for(var i=9;i<11;i++){
-             materials.push(new THREE.MeshPhongMaterial());
+             materials.push(new THREE.MeshBasicMaterial());
              var _obj=this.JSQEX_initialdata.materials[i]!=undefined?this.JSQEX_initialdata.materials[i]:{"mode":"mould","nValue":2,"nUnits":1,"map":[0],"value":[8,8],"cycle":[["a","0"],["0","b"],["-a","0"],["0","-b"]],"position":[["0","0"]],"clipSize":[["a","b"]],"radius":[["0","0","0","0"]],"src":["http://res.gezlife.com/resource/Imgs/uploads/model/201706/13/155995L/155995_UV_COS.jpg"],"realSize":[[8,8]],"type":"A","id":["B_157527_160621_157527"],"backupSrc":[[]],"model":["富之岛/富丽/450"],"matRotate":["0"],"bgRefSrc":"","reflexParameter":[""],"blurValue":["0.85"],"reflexMinQuality":[""],"reflexMidQuality":[""],"reflexMaxQuality":[""],"map_yy":[""],"map_gg":[""],"map_fx":[""],"map_zh":[""],"refSrc":[""],"chamferRanges":[[true,true,true,true]],"normals":[1],"method":"roll","rotation":"0","paveDetail":{"ifAngle":[false],"angleEdge":["5"],"ifPave":true,"paveType":"","paveData":{"paveWay":"roll","paveDire":"0","paveSize":"4"}},"rotCenter":{"x":0,"y":0},"lines":[0.03],"bgSrc":"common/images/color/c_cement.jpg?13","lineWidth":0.03};
              this.JSQEX_initialdata.materials.push(_obj);
              materials[i].map= THREE.ImageUtils.loadTexture(_obj.src,null,this.JSQEX_isPowerOfTwo.bind(this,i));
             } 
             if(this.JSQEX_object_type.utype){
                 materials.push(
-                    new THREE.MeshPhongMaterial()
+                    new THREE.MeshBasicMaterial()
                 )
                 var _obj=this.JSQEX_initialdata.materials[11]!=undefined?this.JSQEX_initialdata.materials[11]:{"mode":"mould","nValue":2,"nUnits":1,"map":[0],"value":[8,8],"cycle":[["a","0"],["0","b"],["-a","0"],["0","-b"]],"position":[["0","0"]],"clipSize":[["a","b"]],"radius":[["0","0","0","0"]],"src":["http://res.gezlife.com/resource/Imgs/uploads/model/201706/13/155995L/155995_UV_COS.jpg"],"realSize":[[8,8]],"type":"A","id":["B_157527_160621_157527"],"backupSrc":[[]],"model":["富之岛/富丽/450"],"matRotate":["0"],"bgRefSrc":"","reflexParameter":[""],"blurValue":["0.85"],"reflexMinQuality":[""],"reflexMidQuality":[""],"reflexMaxQuality":[""],"map_yy":[""],"map_gg":[""],"map_fx":[""],"map_zh":[""],"refSrc":[""],"chamferRanges":[[true,true,true,true]],"normals":[1],"method":"roll","rotation":"0","paveDetail":{"ifAngle":[false],"angleEdge":["5"],"ifPave":true,"paveType":"","paveData":{"paveWay":"roll","paveDire":"0","paveSize":"4"}},"rotCenter":{"x":0,"y":0},"lines":[0.03],"bgSrc":"common/images/color/c_cement.jpg?13","lineWidth":0.03};
                 this.JSQEX_initialdata.materials.push(_obj);

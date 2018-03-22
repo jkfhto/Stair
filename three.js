@@ -28850,9 +28850,9 @@ THREE.ImageUtils = {
             image = loader.load( url, function () {
 
                 texture.needsUpdate = true;
-                setTimeout( function() {
-                    Engine.needUpdate3D = true;
-                }, 500 );
+                // setTimeout( function() {
+                //     Engine.needUpdate3D = true;
+                // }, 500 );
                 var dataURL = getDataURL(image);
 
                 if ( onLoad ) onLoad( texture );
