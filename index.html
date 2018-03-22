@@ -9,7 +9,7 @@
         <script src="OrbitControls2.js"></script>
         <script type="text/javascript" src="JSQEXMathematics.js"></script>
         <script type="text/javascript" src="JSQEXBasicStructures.js"></script>
-        <script type="text/javascript" src="stair8-25.js"></script>
+        <script type="text/javascript" src="stair.js"></script>
         <script src="dat.gui.min.js"></script>
         <script type="text/javascript" src="command.js"></script>
         <style>
@@ -54,15 +54,16 @@ function init() {
                 renderer.domElement.id="staircanvas";
                 window.addEventListener( 'resize', onWindowResize, false );
             }
- function animate() {
-                requestAnimationFrame( animate );
-                renderer.render( scene, camera );
-            } 
-function onWindowResize() {
+        function animate() {
+            requestAnimationFrame( animate );
+            renderer.render( scene, camera );
+        } 
+
+        function onWindowResize() {
             camera.aspect = window.innerWidth / window.innerHeight;
             camera.updateProjectionMatrix();
             renderer.setSize( window.innerWidth, window.innerHeight );                   
         }              
-                 </script>
+    </script>
     </body>
 </html>
