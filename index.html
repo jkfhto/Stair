@@ -9,7 +9,7 @@
         <script src="OrbitControls2.js"></script>
         <script type="text/javascript" src="JSQEXMathematics.js"></script>
         <script type="text/javascript" src="JSQEXBasicStructures.js"></script>
-        <script type="text/javascript" src="stair.js"></script>
+        <script type="text/javascript" src="stair8-25.js"></script>
         <script src="dat.gui.min.js"></script>
         <script type="text/javascript" src="command.js"></script>
         <style>
@@ -50,23 +50,8 @@ function init() {
                 document.body.appendChild( renderer.domElement );
                 stair = new JSQEXBasicStructure.JSQEX_Stair();
                 // aa=new JSQEXCommands.JSQEX_StairEditor(stair,renderer.domElement);
-                stair.JSQEX_initEdit_interface({tjlx:1,normal:new THREE.Vector3(-1,0,1),point:new THREE.Vector3(0,0,-0),height:2000,addgui:true,length:2000,obj:scene});
-    //             var _json={points: [ { x: 0, y: 0 }, { x: -1500, y:0 },{ x: -2210, y:0 },{ x: -2210, y:610 },{ x: -1500, y:610 },{ x: 0, y:610 },{ x: 410, y:610 },{ x: 410, y:0 },{ x: 0, y:0 },{ x: -1500, y:0 },{ x: -2210, y:0 },{ x: -2210, y:610 },{ x: -1500, y:610 },{ x: 0, y:610 }],
-    // segmentInfo: [{ scope: [0, 1], height:[0,500], stairCount: 6 },{ scope: [1, 4], height:[500,500], stairCount: 0 },{ scope: [4, 5], height:[500,1000], stairCount: 6 },{ scope: [5, 8], height:[1000,1000], stairCount: 0 },{ scope: [8, 9], height:[1000,1500], stairCount: 6 },{ scope: [9, 12], height:[1500,1500], stairCount: 0 },{ scope: [12, 13], height:[1500,2000], stairCount: 6 }],tjwidth:520,tjhd:50,pthd:50,overdistance:60,ptwidth:520 ,materialurl:["css/pic1.jpg","css/pic2.jpg","css/pic3.jpg","css/pic4.jpg","css/pic5.jpg","css/pic6.jpg"] };
-    // var _json=aa.JSQEX_stair.JSQEX_Computevertex(new THREE.Vector3(-1536, 717, 200),new THREE.Vector3(1580, -1947, 200),3);
-    // var _json=aa.JSQEX_stair.JSQEX_Computevertex(new THREE.Vector3(-2000, -2400, 200),new THREE.Vector3(1580, 1947, 200),3);
-    //             stair.JSQEX_load(_json)
-    //             aa.JSQEX_onExecute();
+                stair.JSQEX_initEdit_interface({stairlx:1,normal:new THREE.Vector3(1,0,0),point:new THREE.Vector3(0,0,-0),height:3000,addgui:true,length:2000,obj:scene});
                 renderer.domElement.id="staircanvas";
-                // document.getElementById("staircanvas").onmousedown=function(){
-                //     aa.JSQEX_onMouseDown(event);
-                // };
-                // document.getElementById("staircanvas").onmousemove=function(){
-                //     aa.JSQEX_onMouseMove(event);
-                // };
-                // document.getElementById("staircanvas").onmouseup=function(){
-                //     aa.JSQEX_onMouseUp(event);
-                // };
                 window.addEventListener( 'resize', onWindowResize, false );
             }
  function animate() {
